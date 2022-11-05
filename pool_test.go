@@ -5,12 +5,15 @@ import (
 	"runtime"
 	"sync/atomic"
 	"testing"
+
+	"go.uber.org/goleak"
 )
 
 var dead = deadFn()
 
 //gocyclo:ignore
 func TestPool(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	setup := func(size int) (*pool, *int32) {
 		var count int32
 		return newPool(size, dead, func() wire {
@@ -31,6 +34,7 @@ func TestPool(t *testing.T) {
 	}
 
 	t.Run("DefaultPoolSize", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		p := newPool(0, dead, func() wire { return nil })
 		if cap(p.list) == 0 {
 			t.Fatalf("DefaultPoolSize is not applied")
@@ -38,6 +42,7 @@ func TestPool(t *testing.T) {
 	})
 
 	t.Run("Reuse", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		pool, count := setup(100)
 		for i := 0; i < 1000; i++ {
 			pool.Store(pool.Acquire())
@@ -48,6 +53,7 @@ func TestPool(t *testing.T) {
 	})
 
 	t.Run("NotExceed", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		conn := make([]wire, 100)
 		pool, count := setup(len(conn))
 		for i := 0; i < len(conn); i++ {
@@ -70,6 +76,7 @@ func TestPool(t *testing.T) {
 	})
 
 	t.Run("NoShare", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		conn := make([]wire, 100)
 		pool, _ := setup(len(conn))
 		for i := 0; i < len(conn); i++ {
@@ -89,6 +96,7 @@ func TestPool(t *testing.T) {
 	})
 
 	t.Run("Close", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		pool, count := setup(2)
 		w1 := pool.Acquire()
 		w2 := pool.Acquire()
@@ -118,6 +126,7 @@ func TestPool(t *testing.T) {
 	})
 
 	t.Run("Close Empty", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		pool, count := setup(2)
 		w1 := pool.Acquire()
 		if w1.Error() != nil {
@@ -143,6 +152,7 @@ func TestPool(t *testing.T) {
 	})
 
 	t.Run("Close Waiting", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		pool, count := setup(1)
 		w1 := pool.Acquire()
 		if w1.Error() != nil {
@@ -176,6 +186,7 @@ func TestPool(t *testing.T) {
 }
 
 func TestPoolError(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	setup := func(size int) (*pool, *int32) {
 		var count int32
 		return newPool(size, dead, func() wire {
@@ -190,6 +201,7 @@ func TestPoolError(t *testing.T) {
 	}
 
 	t.Run("NotStoreErrConn", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		conn := make([]wire, 100)
 		pool, count := setup(len(conn))
 		for i := 0; i < len(conn); i++ {

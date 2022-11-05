@@ -18,10 +18,6 @@ import (
 	"go.uber.org/goleak"
 )
 
-func TestMain(m *testing.M) {
-	goleak.VerifyTestMain(m)
-}
-
 func accept(t *testing.T, ln net.Listener) (*redisMock, error) {
 	conn, err := ln.Accept()
 	if err != nil {
@@ -47,6 +43,7 @@ func accept(t *testing.T, ln net.Listener) (*redisMock, error) {
 }
 
 func TestNewClusterClient(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		t.Fatal(err)
@@ -79,6 +76,7 @@ func TestNewClusterClient(t *testing.T) {
 }
 
 func TestNewClusterClientError(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		t.Fatal(err)
@@ -106,6 +104,7 @@ func TestNewClusterClientError(t *testing.T) {
 }
 
 func TestFallBackSingleClient(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		t.Fatal(err)
@@ -138,6 +137,7 @@ func TestFallBackSingleClient(t *testing.T) {
 }
 
 func TestTLSClient(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	pub, priv, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
 		t.Fatalf("Failed to generate private key: %v", err)
@@ -217,6 +217,7 @@ func TestTLSClient(t *testing.T) {
 }
 
 func TestSingleClientMultiplex(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	option := ClientOption{}
 	if v := singleClientMultiplex(option.PipelineMultiplex); v != 2 {
 		t.Fatalf("unexpected value %v", v)

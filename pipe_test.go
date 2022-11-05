@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/rueian/rueidis/internal/cmds"
+	"go.uber.org/goleak"
 )
 
 type redisExpect struct {
@@ -172,7 +173,9 @@ func ExpectOK(t *testing.T, result RedisResult) {
 }
 
 func TestNewPipe(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	t.Run("Auth without Username", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		n1, n2 := net.Pipe()
 		mock := &redisMock{buf: bufio.NewReader(n2), conn: n2}
 		go func() {
@@ -201,6 +204,7 @@ func TestNewPipe(t *testing.T) {
 		n2.Close()
 	})
 	t.Run("Auth with Username", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		n1, n2 := net.Pipe()
 		mock := &redisMock{buf: bufio.NewReader(n2), conn: n2}
 		go func() {
@@ -230,6 +234,7 @@ func TestNewPipe(t *testing.T) {
 		n2.Close()
 	})
 	t.Run("With ClientSideTrackingOptions", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		n1, n2 := net.Pipe()
 		mock := &redisMock{buf: bufio.NewReader(n2), conn: n2}
 		go func() {
@@ -254,6 +259,7 @@ func TestNewPipe(t *testing.T) {
 		n2.Close()
 	})
 	t.Run("Network Error", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		n1, n2 := net.Pipe()
 		n1.Close()
 		n2.Close()
@@ -264,7 +270,9 @@ func TestNewPipe(t *testing.T) {
 }
 
 func TestNewRESP2Pipe(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	t.Run("Without DisableCache", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		n1, n2 := net.Pipe()
 		mock := &redisMock{buf: bufio.NewReader(n2), conn: n2}
 		go func() {
@@ -282,6 +290,7 @@ func TestNewRESP2Pipe(t *testing.T) {
 		n2.Close()
 	})
 	t.Run("Without DisableCache 2", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		n1, n2 := net.Pipe()
 		mock := &redisMock{buf: bufio.NewReader(n2), conn: n2}
 		go func() {
@@ -299,6 +308,7 @@ func TestNewRESP2Pipe(t *testing.T) {
 		n2.Close()
 	})
 	t.Run("Auth without Username", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		n1, n2 := net.Pipe()
 		mock := &redisMock{buf: bufio.NewReader(n2), conn: n2}
 		go func() {
@@ -332,6 +342,7 @@ func TestNewRESP2Pipe(t *testing.T) {
 		n2.Close()
 	})
 	t.Run("Auth with Username", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		n1, n2 := net.Pipe()
 		mock := &redisMock{buf: bufio.NewReader(n2), conn: n2}
 		go func() {
@@ -366,6 +377,7 @@ func TestNewRESP2Pipe(t *testing.T) {
 		n2.Close()
 	})
 	t.Run("Network Error", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		n1, n2 := net.Pipe()
 		mock := &redisMock{buf: bufio.NewReader(n2), conn: n2}
 		go func() {
@@ -390,6 +402,7 @@ func TestNewRESP2Pipe(t *testing.T) {
 }
 
 func TestWriteSingleFlush(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, mock, cancel, _ := setup(t, ClientOption{})
 	defer cancel()
 	go func() { mock.Expect("PING").ReplyString("OK") }()
@@ -397,6 +410,7 @@ func TestWriteSingleFlush(t *testing.T) {
 }
 
 func TestIgnoreOutOfBandDataDuringSyncMode(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, mock, cancel, _ := setup(t, ClientOption{})
 	defer cancel()
 	go func() {
@@ -406,6 +420,7 @@ func TestIgnoreOutOfBandDataDuringSyncMode(t *testing.T) {
 }
 
 func TestWriteSinglePipelineFlush(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, mock, cancel, _ := setup(t, ClientOption{})
 	defer cancel()
 	times := 2000
@@ -423,6 +438,7 @@ func TestWriteSinglePipelineFlush(t *testing.T) {
 }
 
 func TestWriteMultiFlush(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, mock, cancel, _ := setup(t, ClientOption{})
 	defer cancel()
 	go func() {
@@ -434,6 +450,7 @@ func TestWriteMultiFlush(t *testing.T) {
 }
 
 func TestWriteMultiPipelineFlush(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, mock, cancel, _ := setup(t, ClientOption{})
 	defer cancel()
 	times := 2000
@@ -454,6 +471,7 @@ func TestWriteMultiPipelineFlush(t *testing.T) {
 }
 
 func TestNoReplyExceedRingSize(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, mock, cancel, _ := setup(t, ClientOption{})
 	defer cancel()
 
@@ -479,6 +497,7 @@ func TestNoReplyExceedRingSize(t *testing.T) {
 }
 
 func TestPanicOnProtocolBug(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, mock, _, _ := setup(t, ClientOption{})
 
 	go func() {
@@ -495,6 +514,7 @@ func TestPanicOnProtocolBug(t *testing.T) {
 }
 
 func TestResponseSequenceWithPushMessageInjected(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, mock, cancel, _ := setup(t, ClientOption{})
 	defer cancel()
 
@@ -519,6 +539,7 @@ func TestResponseSequenceWithPushMessageInjected(t *testing.T) {
 }
 
 func TestClientSideCaching(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, mock, cancel, _ := setup(t, ClientOption{})
 	defer cancel()
 
@@ -608,6 +629,7 @@ func TestClientSideCaching(t *testing.T) {
 }
 
 func TestClientSideCachingExecAbort(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, mock, cancel, _ := setup(t, ClientOption{})
 	defer cancel()
 
@@ -637,6 +659,7 @@ func TestClientSideCachingExecAbort(t *testing.T) {
 }
 
 func TestClientSideCachingExecAbortWithMoved(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, mock, cancel, _ := setup(t, ClientOption{})
 	defer cancel()
 
@@ -666,6 +689,7 @@ func TestClientSideCachingExecAbortWithMoved(t *testing.T) {
 }
 
 func TestClientSideCachingWithNonRedisError(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, _, _, closeConn := setup(t, ClientOption{})
 	closeConn()
 
@@ -682,6 +706,7 @@ func TestClientSideCachingWithNonRedisError(t *testing.T) {
 }
 
 func TestClientSideCachingMGet(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, mock, cancel, _ := setup(t, ClientOption{})
 	defer cancel()
 
@@ -815,6 +840,7 @@ func TestClientSideCachingMGet(t *testing.T) {
 }
 
 func TestClientSideCachingJSONMGet(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, mock, cancel, _ := setup(t, ClientOption{})
 	defer cancel()
 
@@ -948,6 +974,7 @@ func TestClientSideCachingJSONMGet(t *testing.T) {
 }
 
 func TestClientSideCachingExecAbortMGet(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, mock, cancel, _ := setup(t, ClientOption{})
 	defer cancel()
 
@@ -982,6 +1009,7 @@ func TestClientSideCachingExecAbortMGet(t *testing.T) {
 }
 
 func TestClientSideCachingExecAbortWithMovedMGet(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, mock, cancel, _ := setup(t, ClientOption{})
 	defer cancel()
 
@@ -1016,6 +1044,7 @@ func TestClientSideCachingExecAbortWithMovedMGet(t *testing.T) {
 }
 
 func TestClientSideCachingWithNonRedisErrorMGet(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, _, _, closeConn := setup(t, ClientOption{})
 	closeConn()
 
@@ -1035,6 +1064,7 @@ func TestClientSideCachingWithNonRedisErrorMGet(t *testing.T) {
 }
 
 func TestClientSideCachingWithSideChannelMGet(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, _, _, closeConn := setup(t, ClientOption{})
 	closeConn()
 
@@ -1051,6 +1081,7 @@ func TestClientSideCachingWithSideChannelMGet(t *testing.T) {
 }
 
 func TestClientSideCachingWithSideChannelErrorMGet(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, _, _, closeConn := setup(t, ClientOption{})
 	closeConn()
 
@@ -1067,6 +1098,7 @@ func TestClientSideCachingWithSideChannelErrorMGet(t *testing.T) {
 }
 
 func TestClientSideCachingDoMultiCacheMGet(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, _, cancel, _ := setup(t, ClientOption{})
 	defer cancel()
 
@@ -1081,6 +1113,7 @@ func TestClientSideCachingDoMultiCacheMGet(t *testing.T) {
 }
 
 func TestClientSideCachingDoMultiCache(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, mock, cancel, _ := setup(t, ClientOption{})
 	defer cancel()
 
@@ -1222,6 +1255,7 @@ func TestClientSideCachingDoMultiCache(t *testing.T) {
 }
 
 func TestClientSideCachingExecAbortDoMultiCache(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, mock, cancel, _ := setup(t, ClientOption{})
 	defer cancel()
 
@@ -1264,6 +1298,7 @@ func TestClientSideCachingExecAbortDoMultiCache(t *testing.T) {
 }
 
 func TestClientSideCachingExecAbortWithMovedDoMultiCache(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, mock, cancel, _ := setup(t, ClientOption{})
 	defer cancel()
 
@@ -1306,6 +1341,7 @@ func TestClientSideCachingExecAbortWithMovedDoMultiCache(t *testing.T) {
 }
 
 func TestClientSideCachingWithNonRedisErrorDoMultiCache(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, _, _, closeConn := setup(t, ClientOption{})
 	closeConn()
 
@@ -1331,6 +1367,7 @@ func TestClientSideCachingWithNonRedisErrorDoMultiCache(t *testing.T) {
 }
 
 func TestClientSideCachingWithSideChannelDoMultiCache(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, _, _, closeConn := setup(t, ClientOption{})
 	closeConn()
 
@@ -1349,6 +1386,7 @@ func TestClientSideCachingWithSideChannelDoMultiCache(t *testing.T) {
 }
 
 func TestClientSideCachingWithSideChannelErrorDoMultiCache(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, _, _, closeConn := setup(t, ClientOption{})
 	closeConn()
 
@@ -1368,6 +1406,7 @@ func TestClientSideCachingWithSideChannelErrorDoMultiCache(t *testing.T) {
 
 // https://github.com/redis/redis/issues/8935
 func TestClientSideCachingRedis6InvalidationBug1(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, mock, cancel, _ := setup(t, ClientOption{})
 	defer cancel()
 
@@ -1429,6 +1468,7 @@ func TestClientSideCachingRedis6InvalidationBug1(t *testing.T) {
 
 // https://github.com/redis/redis/issues/8935
 func TestClientSideCachingRedis6InvalidationBug2(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, mock, cancel, _ := setup(t, ClientOption{})
 	defer cancel()
 
@@ -1490,6 +1530,7 @@ func TestClientSideCachingRedis6InvalidationBug2(t *testing.T) {
 
 // https://github.com/redis/redis/issues/8935
 func TestClientSideCachingRedis6InvalidationBugErr(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, mock, _, closeConn := setup(t, ClientOption{})
 
 	expectCSC := func() {
@@ -1526,6 +1567,7 @@ func TestClientSideCachingRedis6InvalidationBugErr(t *testing.T) {
 }
 
 func TestDisableClientSideCaching(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, mock, cancel, _ := setup(t, ClientOption{DisableCache: true})
 	defer cancel()
 	p.background()
@@ -1563,6 +1605,7 @@ func TestDisableClientSideCaching(t *testing.T) {
 }
 
 func TestOnInvalidations(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	ch := make(chan []RedisMessage)
 	_, mock, cancel, _ := setup(t, ClientOption{
 		OnInvalidations: func(messages []RedisMessage) {
@@ -1606,6 +1649,7 @@ func TestOnInvalidations(t *testing.T) {
 }
 
 func TestMultiHalfErr(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, mock, _, closeConn := setup(t, ClientOption{})
 
 	expectCSC := func() {
@@ -1631,8 +1675,10 @@ func TestMultiHalfErr(t *testing.T) {
 
 //gocyclo:ignore
 func TestPubSub(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	builder := cmds.NewBuilder(cmds.NoSlot)
 	t.Run("NoReply Commands In Do", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		p, mock, cancel, _ := setup(t, ClientOption{})
 		defer cancel()
 
@@ -1664,6 +1710,7 @@ func TestPubSub(t *testing.T) {
 	})
 
 	t.Run("NoReply Commands In DoMulti", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		p, mock, cancel, _ := setup(t, ClientOption{})
 		defer cancel()
 
@@ -1691,6 +1738,7 @@ func TestPubSub(t *testing.T) {
 	})
 
 	t.Run("PubSub Subscribe RedisMessage", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		ctx := context.Background()
 		p, mock, cancel, _ := setup(t, ClientOption{})
 
@@ -1732,6 +1780,7 @@ func TestPubSub(t *testing.T) {
 	})
 
 	t.Run("PubSub SSubscribe RedisMessage", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		ctx := context.Background()
 		p, mock, cancel, _ := setup(t, ClientOption{})
 
@@ -1773,6 +1822,7 @@ func TestPubSub(t *testing.T) {
 	})
 
 	t.Run("PubSub PSubscribe RedisMessage", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		ctx := context.Background()
 		p, mock, cancel, _ := setup(t, ClientOption{})
 
@@ -1815,6 +1865,7 @@ func TestPubSub(t *testing.T) {
 	})
 
 	t.Run("PubSub Wrong Command RedisMessage", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		p, _, cancel, _ := setup(t, ClientOption{})
 		defer cancel()
 
@@ -1828,6 +1879,7 @@ func TestPubSub(t *testing.T) {
 	})
 
 	t.Run("PubSub Subscribe fail", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		ctx := context.Background()
 		p, _, _, closePipe := setup(t, ClientOption{})
 		closePipe()
@@ -1838,6 +1890,7 @@ func TestPubSub(t *testing.T) {
 	})
 
 	t.Run("PubSub Subscribe context cancel", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		ctx, ctxCancel := context.WithCancel(context.Background())
 		p, mock, cancel, _ := setup(t, ClientOption{})
 
@@ -1869,6 +1922,7 @@ func TestPubSub(t *testing.T) {
 	})
 
 	t.Run("PubSub Subscribe Redis Error", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		ctx := context.Background()
 		p, mock, cancel, _ := setup(t, ClientOption{})
 
@@ -1895,6 +1949,7 @@ func TestPubSub(t *testing.T) {
 	})
 
 	t.Run("PubSub Subscribe Response", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		ctx := context.Background()
 		p, mock, cancel, _ := setup(t, ClientOption{})
 
@@ -1940,6 +1995,7 @@ func TestPubSub(t *testing.T) {
 	})
 
 	t.Run("PubSub Wildcard Unsubscribe Response", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		ctx := context.Background()
 		p, mock, cancel, _ := setup(t, ClientOption{})
 
@@ -2007,6 +2063,7 @@ func TestPubSub(t *testing.T) {
 	})
 
 	t.Run("PubSub Proactive SSUNSCRIBE", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		ctx := context.Background()
 		p, mock, cancel, _ := setup(t, ClientOption{})
 
@@ -2104,6 +2161,7 @@ func TestPubSub(t *testing.T) {
 	})
 
 	t.Run("PubSub Unexpected Subscribe/Unsubscribe", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		var shouldPanic = func(push string) (pass bool) {
 			defer func() { pass = recover() == protocolbug }()
 
@@ -2137,6 +2195,7 @@ func TestPubSub(t *testing.T) {
 	})
 
 	t.Run("RESP2 pubsub mixed", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		p, _, cancel, _ := setup(t, ClientOption{})
 		p.version = 5
 		defer cancel()
@@ -2154,6 +2213,7 @@ func TestPubSub(t *testing.T) {
 	})
 
 	t.Run("RESP2 pubsub connect error", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		p, _, cancel, _ := setup(t, ClientOption{})
 		p.version = 5
 		e := errors.New("any")
@@ -2178,9 +2238,11 @@ func TestPubSub(t *testing.T) {
 
 //gocyclo:ignore
 func TestPubSubHooks(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	builder := cmds.NewBuilder(cmds.NoSlot)
 
 	t.Run("Empty Hooks", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		p, _, cancel, _ := setup(t, ClientOption{})
 		defer cancel()
 		if ch := p.SetPubSubHooks(PubSubHooks{}); ch != nil {
@@ -2189,6 +2251,7 @@ func TestPubSubHooks(t *testing.T) {
 	})
 
 	t.Run("Close on error", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		p, _, cancel, closeConn := setup(t, ClientOption{})
 		defer cancel()
 		ch := p.SetPubSubHooks(PubSubHooks{
@@ -2201,6 +2264,7 @@ func TestPubSubHooks(t *testing.T) {
 	})
 
 	t.Run("Swap Hooks", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		p, _, cancel, _ := setup(t, ClientOption{})
 		defer cancel()
 		ch1 := p.SetPubSubHooks(PubSubHooks{
@@ -2222,6 +2286,7 @@ func TestPubSubHooks(t *testing.T) {
 	})
 
 	t.Run("PubSubHooks OnSubscription", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		ctx := context.Background()
 		p, mock, cancel, _ := setup(t, ClientOption{})
 
@@ -2315,6 +2380,7 @@ func TestPubSubHooks(t *testing.T) {
 	})
 
 	t.Run("PubSubHooks OnMessage", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		ctx := context.Background()
 		p, mock, cancel, _ := setup(t, ClientOption{})
 
@@ -2397,6 +2463,7 @@ func TestPubSubHooks(t *testing.T) {
 }
 
 func TestExitOnWriteError(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, _, _, closeConn := setup(t, ClientOption{})
 
 	closeConn()
@@ -2409,6 +2476,7 @@ func TestExitOnWriteError(t *testing.T) {
 }
 
 func TestExitOnPubSubSubscribeWriteError(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, _, _, closeConn := setup(t, ClientOption{})
 
 	activate := cmds.NewBuilder(cmds.NoSlot).Subscribe().Channel("a").Build()
@@ -2434,6 +2502,7 @@ func TestExitOnPubSubSubscribeWriteError(t *testing.T) {
 }
 
 func TestExitOnWriteMultiError(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, _, _, closeConn := setup(t, ClientOption{})
 
 	closeConn()
@@ -2446,6 +2515,7 @@ func TestExitOnWriteMultiError(t *testing.T) {
 }
 
 func TestExitOnRingFullAndConnError(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, mock, _, closeConn := setup(t, ClientOption{
 		RingScaleEachConn: 1,
 	})
@@ -2473,6 +2543,7 @@ func TestExitOnRingFullAndConnError(t *testing.T) {
 }
 
 func TestExitOnRingFullAndPingTimout(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, mock, _, _ := setup(t, ClientOption{
 		RingScaleEachConn: 1,
 		ConnWriteTimeout:  500 * time.Millisecond,
@@ -2499,6 +2570,7 @@ func TestExitOnRingFullAndPingTimout(t *testing.T) {
 }
 
 func TestExitAllGoroutineOnWriteError(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	conn, mock, _, closeConn := setup(t, ClientOption{})
 
 	// start the background worker
@@ -2525,6 +2597,7 @@ func TestExitAllGoroutineOnWriteError(t *testing.T) {
 }
 
 func TestExitOnReadError(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, mock, _, closeConn := setup(t, ClientOption{})
 
 	go func() {
@@ -2540,6 +2613,7 @@ func TestExitOnReadError(t *testing.T) {
 }
 
 func TestExitOnReadMultiError(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, mock, _, closeConn := setup(t, ClientOption{})
 
 	go func() {
@@ -2555,6 +2629,7 @@ func TestExitOnReadMultiError(t *testing.T) {
 }
 
 func TestExitAllGoroutineOnReadError(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, mock, _, closeConn := setup(t, ClientOption{})
 
 	go func() {
@@ -2580,6 +2655,7 @@ func TestExitAllGoroutineOnReadError(t *testing.T) {
 }
 
 func TestCloseAndWaitPendingCMDs(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, mock, _, _ := setup(t, ClientOption{})
 
 	var (
@@ -2610,6 +2686,7 @@ func TestCloseAndWaitPendingCMDs(t *testing.T) {
 }
 
 func TestAlreadyCanceledContext(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, _, close, closeConn := setup(t, ClientOption{})
 	defer closeConn()
 
@@ -2636,6 +2713,7 @@ func TestAlreadyCanceledContext(t *testing.T) {
 }
 
 func TestCancelContext_Do(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, mock, shutdown, _ := setup(t, ClientOption{})
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -2653,6 +2731,7 @@ func TestCancelContext_Do(t *testing.T) {
 }
 
 func TestCancelContext_Do_Block(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, mock, shutdown, _ := setup(t, ClientOption{})
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -2670,6 +2749,7 @@ func TestCancelContext_Do_Block(t *testing.T) {
 }
 
 func TestCancelContext_DoMulti(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, mock, shutdown, _ := setup(t, ClientOption{})
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -2687,6 +2767,7 @@ func TestCancelContext_DoMulti(t *testing.T) {
 }
 
 func TestCancelContext_DoMulti_Block(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, mock, shutdown, _ := setup(t, ClientOption{})
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -2704,6 +2785,7 @@ func TestCancelContext_DoMulti_Block(t *testing.T) {
 }
 
 func TestForceClose_Do_Block(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, mock, _, _ := setup(t, ClientOption{})
 
 	go func() {
@@ -2717,6 +2799,7 @@ func TestForceClose_Do_Block(t *testing.T) {
 }
 
 func TestForceClose_Do_Canceled_Block(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, mock, _, _ := setup(t, ClientOption{})
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -2734,6 +2817,7 @@ func TestForceClose_Do_Canceled_Block(t *testing.T) {
 }
 
 func TestForceClose_DoMulti_Block(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, mock, _, _ := setup(t, ClientOption{})
 
 	go func() {
@@ -2747,6 +2831,7 @@ func TestForceClose_DoMulti_Block(t *testing.T) {
 }
 
 func TestForceClose_DoMulti_Canceled_Block(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, mock, _, _ := setup(t, ClientOption{})
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -2764,6 +2849,7 @@ func TestForceClose_DoMulti_Canceled_Block(t *testing.T) {
 }
 
 func TestOngoingDeadlineContextInSyncMode_Do(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, _, _, closeConn := setup(t, ClientOption{})
 	defer closeConn()
 
@@ -2777,6 +2863,7 @@ func TestOngoingDeadlineContextInSyncMode_Do(t *testing.T) {
 }
 
 func TestWriteDeadlineInSyncMode_Do(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, _, _, closeConn := setup(t, ClientOption{ConnWriteTimeout: 1 * time.Second / 2, Dialer: net.Dialer{KeepAlive: time.Second / 3}})
 	defer closeConn()
 
@@ -2787,6 +2874,7 @@ func TestWriteDeadlineInSyncMode_Do(t *testing.T) {
 }
 
 func TestOngoingDeadlineContextInSyncMode_DoMulti(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, _, _, closeConn := setup(t, ClientOption{})
 	defer closeConn()
 
@@ -2800,6 +2888,7 @@ func TestOngoingDeadlineContextInSyncMode_DoMulti(t *testing.T) {
 }
 
 func TestWriteDeadlineInSyncMode_DoMulti(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, _, _, closeConn := setup(t, ClientOption{ConnWriteTimeout: time.Second / 2, Dialer: net.Dialer{KeepAlive: time.Second / 3}})
 	defer closeConn()
 
@@ -2810,6 +2899,7 @@ func TestWriteDeadlineInSyncMode_DoMulti(t *testing.T) {
 }
 
 func TestOngoingCancelContextInPipelineMode_Do(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, mock, close, closeConn := setup(t, ClientOption{})
 	defer closeConn()
 
@@ -2850,6 +2940,7 @@ func TestOngoingCancelContextInPipelineMode_Do(t *testing.T) {
 }
 
 func TestOngoingWriteTimeoutInPipelineMode_Do(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, _, _, closeConn := setup(t, ClientOption{ConnWriteTimeout: time.Second / 2, Dialer: net.Dialer{KeepAlive: time.Second / 3}})
 	defer closeConn()
 
@@ -2882,6 +2973,7 @@ func TestOngoingWriteTimeoutInPipelineMode_Do(t *testing.T) {
 }
 
 func TestOngoingCancelContextInPipelineMode_DoMulti(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, mock, close, closeConn := setup(t, ClientOption{})
 	defer closeConn()
 
@@ -2922,6 +3014,7 @@ func TestOngoingCancelContextInPipelineMode_DoMulti(t *testing.T) {
 }
 
 func TestOngoingWriteTimeoutInPipelineMode_DoMulti(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, _, _, closeConn := setup(t, ClientOption{ConnWriteTimeout: time.Second / 2, Dialer: net.Dialer{KeepAlive: time.Second / 3}})
 	defer closeConn()
 
@@ -2954,6 +3047,7 @@ func TestOngoingWriteTimeoutInPipelineMode_DoMulti(t *testing.T) {
 }
 
 func TestPipe_CleanSubscriptions_6(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, mock, cancel, _ := setup(t, ClientOption{ConnWriteTimeout: time.Second / 2, Dialer: net.Dialer{KeepAlive: time.Second / 3}})
 	defer cancel()
 	p.background()
@@ -2974,6 +3068,7 @@ func TestPipe_CleanSubscriptions_6(t *testing.T) {
 }
 
 func TestPipe_CleanSubscriptions_7(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, mock, cancel, _ := setup(t, ClientOption{ConnWriteTimeout: time.Second / 2, Dialer: net.Dialer{KeepAlive: time.Second / 3}})
 	p.version = 7
 	defer cancel()
@@ -3000,6 +3095,7 @@ func TestPipe_CleanSubscriptions_7(t *testing.T) {
 }
 
 func TestPingOnConnError(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, mock, _, closeConn := setup(t, ClientOption{ConnWriteTimeout: 3 * time.Second, Dialer: net.Dialer{KeepAlive: time.Second / 3}})
 	p.background()
 	mock.Expect("PING")
@@ -3013,9 +3109,11 @@ func TestPingOnConnError(t *testing.T) {
 
 //gocyclo:ignore
 func TestBlockingCommandNoDeadline(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	// blocking command should not apply timeout
 	timeout := 100 * time.Millisecond
 	t.Run("sync do", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		p, mock, cancel, _ := setup(t, ClientOption{ConnWriteTimeout: timeout})
 		defer cancel()
 		go func() {
@@ -3027,6 +3125,7 @@ func TestBlockingCommandNoDeadline(t *testing.T) {
 		}
 	})
 	t.Run("sync do multi", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		p, mock, cancel, _ := setup(t, ClientOption{ConnWriteTimeout: timeout})
 		defer cancel()
 		go func() {
@@ -3041,6 +3140,7 @@ func TestBlockingCommandNoDeadline(t *testing.T) {
 		}
 	})
 	t.Run("pipeline do - no ping", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		p, mock, cancel, _ := setup(t, ClientOption{ConnWriteTimeout: timeout, Dialer: net.Dialer{KeepAlive: timeout}})
 		defer cancel()
 		p.background()
@@ -3053,6 +3153,7 @@ func TestBlockingCommandNoDeadline(t *testing.T) {
 		}
 	})
 	t.Run("pipeline do - ignore ping timeout", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		p, mock, cancel, _ := setup(t, ClientOption{ConnWriteTimeout: timeout, Dialer: net.Dialer{KeepAlive: timeout}})
 		defer cancel()
 		p.background()
@@ -3069,6 +3170,7 @@ func TestBlockingCommandNoDeadline(t *testing.T) {
 		}
 	})
 	t.Run("pipeline do multi - no ping", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		p, mock, cancel, _ := setup(t, ClientOption{ConnWriteTimeout: timeout, Dialer: net.Dialer{KeepAlive: timeout}})
 		defer cancel()
 		p.background()
@@ -3084,6 +3186,7 @@ func TestBlockingCommandNoDeadline(t *testing.T) {
 		}
 	})
 	t.Run("pipeline do multi - ignore ping timeout", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		p, mock, cancel, _ := setup(t, ClientOption{ConnWriteTimeout: timeout, Dialer: net.Dialer{KeepAlive: timeout}})
 		defer cancel()
 		p.background()
@@ -3105,6 +3208,7 @@ func TestBlockingCommandNoDeadline(t *testing.T) {
 }
 
 func TestDeadPipe(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	ctx := context.Background()
 	if err := deadFn().Error(); err != ErrClosing {
 		t.Fatalf("unexpected err %v", err)
@@ -3127,6 +3231,7 @@ func TestDeadPipe(t *testing.T) {
 }
 
 func TestErrorPipe(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	ctx := context.Background()
 	target := errors.New("any")
 	if err := epipeFn(target).Error(); err != target {

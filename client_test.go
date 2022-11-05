@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/rueian/rueidis/internal/cmds"
+	"go.uber.org/goleak"
 )
 
 type mockConn struct {
@@ -157,6 +158,7 @@ func (m *mockConn) Addr() string {
 }
 
 func TestNewSingleClientNoNode(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	if _, err := newSingleClient(&ClientOption{}, nil, func(dst string, opt *ClientOption) conn {
 		return nil
 	}); err != ErrNoAddr {
@@ -165,6 +167,7 @@ func TestNewSingleClientNoNode(t *testing.T) {
 }
 
 func TestNewSingleClientError(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	v := errors.New("dail err")
 	if _, err := newSingleClient(&ClientOption{InitAddress: []string{""}}, nil, func(dst string, opt *ClientOption) conn {
 		return &mockConn{DialFn: func() error { return v }}
@@ -174,6 +177,7 @@ func TestNewSingleClientError(t *testing.T) {
 }
 
 func TestNewSingleClientOverride(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	m1 := &mockConn{}
 	var m2 conn
 	if _, err := newSingleClient(&ClientOption{InitAddress: []string{""}}, m1, func(dst string, opt *ClientOption) conn {
@@ -188,6 +192,7 @@ func TestNewSingleClientOverride(t *testing.T) {
 
 //gocyclo:ignore
 func TestSingleClient(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	m := &mockConn{
 		AddrFn: func() string { return "myaddr" },
 	}
@@ -199,12 +204,14 @@ func TestSingleClient(t *testing.T) {
 	}
 
 	t.Run("Nodes", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		if nodes := client.Nodes(); len(nodes) != 1 || nodes["myaddr"] != client {
 			t.Fatalf("unexpected nodes")
 		}
 	})
 
 	t.Run("Delegate Do", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		c := client.B().Get().Key("Do").Build()
 		m.DoFn = func(cmd cmds.Completed) RedisResult {
 			if !reflect.DeepEqual(cmd.Commands(), c.Commands()) {
@@ -218,6 +225,7 @@ func TestSingleClient(t *testing.T) {
 	})
 
 	t.Run("Delegate DoMulti", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		c := client.B().Get().Key("Do").Build()
 		m.DoMultiFn = func(cmd ...cmds.Completed) []RedisResult {
 			if !reflect.DeepEqual(cmd[0].Commands(), c.Commands()) {
@@ -234,6 +242,7 @@ func TestSingleClient(t *testing.T) {
 	})
 
 	t.Run("Delegate DoCache", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		c := client.B().Get().Key("DoCache").Cache()
 		m.DoCacheFn = func(cmd cmds.Cacheable, ttl time.Duration) RedisResult {
 			if !reflect.DeepEqual(cmd.Commands(), c.Commands()) || ttl != 100 {
@@ -247,6 +256,7 @@ func TestSingleClient(t *testing.T) {
 	})
 
 	t.Run("Delegate DoMultiCache", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		c := client.B().Get().Key("DoCache").Cache()
 		m.DoMultiCacheFn = func(multi ...CacheableTTL) []RedisResult {
 			if !reflect.DeepEqual(multi[0].Cmd.Commands(), c.Commands()) || multi[0].TTL != 100 {
@@ -263,6 +273,7 @@ func TestSingleClient(t *testing.T) {
 	})
 
 	t.Run("Delegate Receive", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		c := client.B().Subscribe().Channel("ch").Build()
 		hdl := func(message PubSubMessage) {}
 		m.ReceiveFn = func(ctx context.Context, subscribe cmds.Completed, fn func(message PubSubMessage)) error {
@@ -277,6 +288,7 @@ func TestSingleClient(t *testing.T) {
 	})
 
 	t.Run("Delegate Receive Redis Err", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		c := client.B().Subscribe().Channel("ch").Build()
 		e := &RedisError{}
 		m.ReceiveFn = func(ctx context.Context, subscribe cmds.Completed, fn func(message PubSubMessage)) error {
@@ -288,6 +300,7 @@ func TestSingleClient(t *testing.T) {
 	})
 
 	t.Run("Delegate Close", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		called := false
 		m.CloseFn = func() { called = true }
 		client.Close()
@@ -297,6 +310,7 @@ func TestSingleClient(t *testing.T) {
 	})
 
 	t.Run("Dedicated Err", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		v := errors.New("fn err")
 		if err := client.Dedicated(func(client DedicatedClient) error {
 			return v
@@ -306,6 +320,7 @@ func TestSingleClient(t *testing.T) {
 	})
 
 	t.Run("Dedicated Delegate Receive Redis Err", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		e := &RedisError{}
 		w := &mockWire{
 			ReceiveFn: func(ctx context.Context, subscribe cmds.Completed, fn func(message PubSubMessage)) error {
@@ -323,6 +338,7 @@ func TestSingleClient(t *testing.T) {
 	})
 
 	t.Run("Dedicated Delegate", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		closed := false
 		w := &mockWire{
 			DoFn: func(cmd cmds.Completed) RedisResult {
@@ -389,6 +405,7 @@ func TestSingleClient(t *testing.T) {
 	})
 
 	t.Run("Dedicate Delegate", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		closed := false
 		w := &mockWire{
 			DoFn: func(cmd cmds.Completed) RedisResult {
@@ -455,6 +472,7 @@ func TestSingleClient(t *testing.T) {
 	})
 
 	t.Run("Dedicate Delegate Release On Close", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		stored := 0
 		w := &mockWire{}
 		m.AcquireFn = func() wire { return w }
@@ -469,6 +487,7 @@ func TestSingleClient(t *testing.T) {
 	})
 
 	t.Run("Dedicate Delegate No Duplicate Release", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		stored := 0
 		w := &mockWire{}
 		m.AcquireFn = func() wire { return w }
@@ -487,6 +506,7 @@ func TestSingleClient(t *testing.T) {
 }
 
 func TestSingleClientRetry(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	SetupClientRetry(t, func(m *mockConn) Client {
 		c, err := newSingleClient(&ClientOption{InitAddress: []string{""}}, m, func(dst string, opt *ClientOption) conn {
 			return m
@@ -546,6 +566,7 @@ func SetupClientRetry(t *testing.T, fn func(mock *mockConn) Client) {
 	}
 
 	t.Run("Delegate Do ReadOnly Retry", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		c, m := setup()
 		m.DoFn = makeDoFn(
 			newErrResult(ErrClosing),
@@ -557,6 +578,7 @@ func SetupClientRetry(t *testing.T, fn func(mock *mockConn) Client) {
 	})
 
 	t.Run("Delegate Do ReadOnly NoRetry - closed", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		c, m := setup()
 		m.DoFn = makeDoFn(newErrResult(ErrClosing))
 		c.Close()
@@ -566,6 +588,7 @@ func SetupClientRetry(t *testing.T, fn func(mock *mockConn) Client) {
 	})
 
 	t.Run("Delegate Do ReadOnly NoRetry - ctx done", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		c, m := setup()
 		m.DoFn = makeDoFn(newErrResult(ErrClosing))
 		ctx, cancel := context.WithCancel(context.Background())
@@ -576,6 +599,7 @@ func SetupClientRetry(t *testing.T, fn func(mock *mockConn) Client) {
 	})
 
 	t.Run("Delegate Do Write NoRetry", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		c, m := setup()
 		m.DoFn = makeDoFn(newErrResult(ErrClosing))
 		if v, err := c.Do(context.Background(), c.B().Set().Key("Do").Value("V").Build()).ToString(); err != ErrClosing {
@@ -584,6 +608,7 @@ func SetupClientRetry(t *testing.T, fn func(mock *mockConn) Client) {
 	})
 
 	t.Run("Delegate DoMulti ReadOnly Retry", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		c, m := setup()
 		if _, ok := c.(*clusterClient); ok {
 			m.DoMultiFn = makeDoMultiFn(
@@ -606,6 +631,7 @@ func SetupClientRetry(t *testing.T, fn func(mock *mockConn) Client) {
 	})
 
 	t.Run("Delegate DoMulti ReadOnly NoRetry - closed", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		c, m := setup()
 		m.DoMultiFn = makeDoMultiFn([]RedisResult{newErrResult(ErrClosing)})
 		c.Close()
@@ -615,6 +641,7 @@ func SetupClientRetry(t *testing.T, fn func(mock *mockConn) Client) {
 	})
 
 	t.Run("Delegate DoMulti ReadOnly NoRetry - ctx done", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		c, m := setup()
 		m.DoMultiFn = makeDoMultiFn([]RedisResult{newErrResult(ErrClosing)})
 		ctx, cancel := context.WithCancel(context.Background())
@@ -625,6 +652,7 @@ func SetupClientRetry(t *testing.T, fn func(mock *mockConn) Client) {
 	})
 
 	t.Run("Delegate DoMulti Write NoRetry", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		c, m := setup()
 		m.DoMultiFn = makeDoMultiFn([]RedisResult{newErrResult(ErrClosing)})
 		if v, err := c.DoMulti(context.Background(), c.B().Set().Key("Do").Value("V").Build())[0].ToString(); err != ErrClosing {
@@ -633,6 +661,7 @@ func SetupClientRetry(t *testing.T, fn func(mock *mockConn) Client) {
 	})
 
 	t.Run("Delegate DoCache Retry", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		c, m := setup()
 		m.DoCacheFn = makeDoCacheFn(
 			newErrResult(ErrClosing),
@@ -644,6 +673,7 @@ func SetupClientRetry(t *testing.T, fn func(mock *mockConn) Client) {
 	})
 
 	t.Run("Delegate DoCache NoRetry - closed", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		c, m := setup()
 		m.DoCacheFn = makeDoCacheFn(newErrResult(ErrClosing))
 		c.Close()
@@ -653,6 +683,7 @@ func SetupClientRetry(t *testing.T, fn func(mock *mockConn) Client) {
 	})
 
 	t.Run("Delegate DoCache ReadOnly NoRetry - ctx done", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		c, m := setup()
 		m.DoCacheFn = makeDoCacheFn(newErrResult(ErrClosing))
 		ctx, cancel := context.WithCancel(context.Background())
@@ -663,6 +694,7 @@ func SetupClientRetry(t *testing.T, fn func(mock *mockConn) Client) {
 	})
 
 	t.Run("Delegate DoMultiCache Retry", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		c, m := setup()
 		m.DoMultiCacheFn = makeDoMultiCacheFn(
 			[]RedisResult{newErrResult(ErrClosing)},
@@ -674,6 +706,7 @@ func SetupClientRetry(t *testing.T, fn func(mock *mockConn) Client) {
 	})
 
 	t.Run("Delegate DoMultiCache NoRetry - closed", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		c, m := setup()
 		m.DoMultiCacheFn = makeDoMultiCacheFn([]RedisResult{newErrResult(ErrClosing)})
 		c.Close()
@@ -683,6 +716,7 @@ func SetupClientRetry(t *testing.T, fn func(mock *mockConn) Client) {
 	})
 
 	t.Run("Delegate DoMultiCache ReadOnly NoRetry - ctx done", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		c, m := setup()
 		m.DoMultiCacheFn = makeDoMultiCacheFn([]RedisResult{newErrResult(ErrClosing)})
 		ctx, cancel := context.WithCancel(context.Background())
@@ -693,6 +727,7 @@ func SetupClientRetry(t *testing.T, fn func(mock *mockConn) Client) {
 	})
 
 	t.Run("Delegate Receive Retry", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		c, m := setup()
 		m.ReceiveFn = makeReceiveFn(ErrClosing, nil)
 		if err := c.Receive(context.Background(), c.B().Subscribe().Channel("ch").Build(), nil); err != nil {
@@ -701,6 +736,7 @@ func SetupClientRetry(t *testing.T, fn func(mock *mockConn) Client) {
 	})
 
 	t.Run("Delegate Receive NoRetry - closed", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		c, m := setup()
 		m.ReceiveFn = makeReceiveFn(ErrClosing)
 		c.Close()
@@ -710,6 +746,7 @@ func SetupClientRetry(t *testing.T, fn func(mock *mockConn) Client) {
 	})
 
 	t.Run("Delegate Receive NoRetry - ctx done", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		c, m := setup()
 		m.ReceiveFn = makeReceiveFn(ErrClosing)
 		ctx, cancel := context.WithCancel(context.Background())
@@ -720,6 +757,7 @@ func SetupClientRetry(t *testing.T, fn func(mock *mockConn) Client) {
 	})
 
 	t.Run("Dedicate Delegate Do ReadOnly Retry", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		c, m := setup()
 		m.DoFn = makeDoFn(
 			newErrResult(ErrClosing),
@@ -737,6 +775,7 @@ func SetupClientRetry(t *testing.T, fn func(mock *mockConn) Client) {
 	})
 
 	t.Run("Dedicate Delegate Do ReadOnly NoRetry - broken", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		c, m := setup()
 		m.DoFn = makeDoFn(newErrResult(ErrClosing))
 		m.AcquireFn = func() wire { return m }
@@ -749,6 +788,7 @@ func SetupClientRetry(t *testing.T, fn func(mock *mockConn) Client) {
 	})
 
 	t.Run("Dedicate Delegate Do ReadOnly NoRetry - ctx done", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		c, m := setup()
 		m.DoFn = makeDoFn(newErrResult(ErrClosing))
 		m.AcquireFn = func() wire { return m }
@@ -762,6 +802,7 @@ func SetupClientRetry(t *testing.T, fn func(mock *mockConn) Client) {
 	})
 
 	t.Run("Dedicate Delegate Do Write NoRetry", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		c, m := setup()
 		m.DoFn = makeDoFn(newErrResult(ErrClosing))
 		m.AcquireFn = func() wire { return m }
@@ -773,6 +814,7 @@ func SetupClientRetry(t *testing.T, fn func(mock *mockConn) Client) {
 	})
 
 	t.Run("Dedicate Delegate DoMulti ReadOnly Retry", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		c, m := setup()
 		m.DoMultiFn = makeDoMultiFn(
 			[]RedisResult{newErrResult(ErrClosing)},
@@ -790,6 +832,7 @@ func SetupClientRetry(t *testing.T, fn func(mock *mockConn) Client) {
 	})
 
 	t.Run("Dedicate Delegate DoMulti ReadOnly NoRetry - broken", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		c, m := setup()
 		m.DoMultiFn = makeDoMultiFn([]RedisResult{newErrResult(ErrClosing)})
 		m.AcquireFn = func() wire { return m }
@@ -802,6 +845,7 @@ func SetupClientRetry(t *testing.T, fn func(mock *mockConn) Client) {
 	})
 
 	t.Run("Dedicate Delegate DoMulti ReadOnly NoRetry - ctx done", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		c, m := setup()
 		m.DoMultiFn = makeDoMultiFn([]RedisResult{newErrResult(ErrClosing)})
 		m.AcquireFn = func() wire { return m }
@@ -815,6 +859,7 @@ func SetupClientRetry(t *testing.T, fn func(mock *mockConn) Client) {
 	})
 
 	t.Run("Dedicate Delegate DoMulti Write NoRetry", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		c, m := setup()
 		m.DoMultiFn = makeDoMultiFn([]RedisResult{newErrResult(ErrClosing)})
 		m.AcquireFn = func() wire { return m }
@@ -828,6 +873,7 @@ func SetupClientRetry(t *testing.T, fn func(mock *mockConn) Client) {
 	////
 
 	t.Run("Delegate Receive Retry", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		c, m := setup()
 		m.ReceiveFn = makeReceiveFn(ErrClosing, nil)
 		m.AcquireFn = func() wire { return m }
@@ -842,6 +888,7 @@ func SetupClientRetry(t *testing.T, fn func(mock *mockConn) Client) {
 	})
 
 	t.Run("Delegate Receive NoRetry - broken", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		c, m := setup()
 		m.ReceiveFn = makeReceiveFn(ErrClosing)
 		m.AcquireFn = func() wire { return m }
@@ -854,6 +901,7 @@ func SetupClientRetry(t *testing.T, fn func(mock *mockConn) Client) {
 	})
 
 	t.Run("Delegate Receive NoRetry - ctx done", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		c, m := setup()
 		m.ReceiveFn = makeReceiveFn(ErrClosing)
 		m.AcquireFn = func() wire { return m }

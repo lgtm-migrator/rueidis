@@ -7,9 +7,12 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+
+	"go.uber.org/goleak"
 )
 
 func TestIsRedisNil(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	err := &RedisError{typ: '_'}
 	if !IsRedisNil(err) {
 		t.Fatal("IsRedisNil fail")
@@ -24,7 +27,9 @@ func TestIsRedisNil(t *testing.T) {
 
 //gocyclo:ignore
 func TestRedisResult(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	t.Run("ToInt64", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		if _, err := (RedisResult{err: errors.New("other")}).ToInt64(); err == nil {
 			t.Fatal("ToInt64 not failed as expected")
 		}
@@ -37,6 +42,7 @@ func TestRedisResult(t *testing.T) {
 	})
 
 	t.Run("ToBool", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		if _, err := (RedisResult{err: errors.New("other")}).ToBool(); err == nil {
 			t.Fatal("ToBool not failed as expected")
 		}
@@ -49,6 +55,7 @@ func TestRedisResult(t *testing.T) {
 	})
 
 	t.Run("AsBool", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		if _, err := (RedisResult{err: errors.New("other")}).AsBool(); err == nil {
 			t.Fatal("ToBool not failed as expected")
 		}
@@ -70,6 +77,7 @@ func TestRedisResult(t *testing.T) {
 	})
 
 	t.Run("ToFloat64", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		if _, err := (RedisResult{err: errors.New("other")}).ToFloat64(); err == nil {
 			t.Fatal("ToFloat64 not failed as expected")
 		}
@@ -82,6 +90,7 @@ func TestRedisResult(t *testing.T) {
 	})
 
 	t.Run("ToString", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		if _, err := (RedisResult{err: errors.New("other")}).ToString(); err == nil {
 			t.Fatal("ToString not failed as expected")
 		}
@@ -94,6 +103,7 @@ func TestRedisResult(t *testing.T) {
 	})
 
 	t.Run("AsReader", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		if _, err := (RedisResult{err: errors.New("other")}).AsReader(); err == nil {
 			t.Fatal("AsReader not failed as expected")
 		}
@@ -108,6 +118,7 @@ func TestRedisResult(t *testing.T) {
 	})
 
 	t.Run("DecodeJSON", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		v := map[string]string{}
 		if err := (RedisResult{err: errors.New("other")}).DecodeJSON(&v); err == nil {
 			t.Fatal("AsReader not failed as expected")
@@ -121,6 +132,7 @@ func TestRedisResult(t *testing.T) {
 	})
 
 	t.Run("AsInt64", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		if _, err := (RedisResult{err: errors.New("other")}).AsInt64(); err == nil {
 			t.Fatal("AsInt64 not failed as expected")
 		}
@@ -136,6 +148,7 @@ func TestRedisResult(t *testing.T) {
 	})
 
 	t.Run("AsFloat64", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		if _, err := (RedisResult{err: errors.New("other")}).AsFloat64(); err == nil {
 			t.Fatal("AsFloat64 not failed as expected")
 		}
@@ -151,6 +164,7 @@ func TestRedisResult(t *testing.T) {
 	})
 
 	t.Run("ToArray", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		if _, err := (RedisResult{err: errors.New("other")}).ToArray(); err == nil {
 			t.Fatal("ToArray not failed as expected")
 		}
@@ -164,6 +178,7 @@ func TestRedisResult(t *testing.T) {
 	})
 
 	t.Run("AsStrSlice", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		if _, err := (RedisResult{err: errors.New("other")}).AsStrSlice(); err == nil {
 			t.Fatal("AsStrSlice not failed as expected")
 		}
@@ -177,6 +192,7 @@ func TestRedisResult(t *testing.T) {
 	})
 
 	t.Run("AsIntSlice", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		if _, err := (RedisResult{err: errors.New("other")}).AsIntSlice(); err == nil {
 			t.Fatal("AsIntSlice not failed as expected")
 		}
@@ -190,6 +206,7 @@ func TestRedisResult(t *testing.T) {
 	})
 
 	t.Run("AsFloatSlice", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		if _, err := (RedisResult{err: errors.New("other")}).AsFloatSlice(); err == nil {
 			t.Fatal("AsFloatSlice not failed as expected")
 		}
@@ -206,6 +223,7 @@ func TestRedisResult(t *testing.T) {
 	})
 
 	t.Run("AsMap", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		if _, err := (RedisResult{err: errors.New("other")}).AsMap(); err == nil {
 			t.Fatal("AsMap not failed as expected")
 		}
@@ -221,6 +239,7 @@ func TestRedisResult(t *testing.T) {
 	})
 
 	t.Run("AsStrMap", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		if _, err := (RedisResult{err: errors.New("other")}).AsStrMap(); err == nil {
 			t.Fatal("AsStrMap not failed as expected")
 		}
@@ -236,6 +255,7 @@ func TestRedisResult(t *testing.T) {
 	})
 
 	t.Run("AsIntMap", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		if _, err := (RedisResult{err: errors.New("other")}).AsIntMap(); err == nil {
 			t.Fatal("AsIntMap not failed as expected")
 		}
@@ -255,6 +275,7 @@ func TestRedisResult(t *testing.T) {
 	})
 
 	t.Run("ToMap", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		if _, err := (RedisResult{err: errors.New("other")}).ToMap(); err == nil {
 			t.Fatal("ToMap not failed as expected")
 		}
@@ -270,6 +291,7 @@ func TestRedisResult(t *testing.T) {
 	})
 
 	t.Run("ToAny", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		if _, err := (RedisResult{err: errors.New("other")}).ToAny(); err == nil {
 			t.Fatal("ToAny not failed as expected")
 		}
@@ -300,6 +322,7 @@ func TestRedisResult(t *testing.T) {
 	})
 
 	t.Run("AsXRangeEntry", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		if _, err := (RedisResult{err: errors.New("other")}).AsXRangeEntry(); err == nil {
 			t.Fatal("AsXRangeEntry not failed as expected")
 		}
@@ -321,6 +344,7 @@ func TestRedisResult(t *testing.T) {
 	})
 
 	t.Run("AsXRange", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		if _, err := (RedisResult{err: errors.New("other")}).AsXRange(); err == nil {
 			t.Fatal("AsXRange not failed as expected")
 		}
@@ -342,6 +366,7 @@ func TestRedisResult(t *testing.T) {
 	})
 
 	t.Run("AsXRead", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		if _, err := (RedisResult{err: errors.New("other")}).AsXRead(); err == nil {
 			t.Fatal("AsXRead not failed as expected")
 		}
@@ -395,6 +420,7 @@ func TestRedisResult(t *testing.T) {
 	})
 
 	t.Run("AsZScore", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		if _, err := (RedisResult{err: errors.New("other")}).AsZScore(); err == nil {
 			t.Fatal("AsZScore not failed as expected")
 		}
@@ -416,6 +442,7 @@ func TestRedisResult(t *testing.T) {
 	})
 
 	t.Run("AsZScores", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		if _, err := (RedisResult{err: errors.New("other")}).AsZScores(); err == nil {
 			t.Fatal("AsZScores not failed as expected")
 		}
@@ -451,6 +478,7 @@ func TestRedisResult(t *testing.T) {
 	})
 
 	t.Run("IsCacheHit", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		if (RedisResult{err: errors.New("other")}).IsCacheHit() {
 			t.Fatal("IsCacheHit not as expected")
 		}
@@ -462,12 +490,15 @@ func TestRedisResult(t *testing.T) {
 
 //gocyclo:ignore
 func TestRedisMessage(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	t.Run("IsNil", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		if !(&RedisMessage{typ: '_'}).IsNil() {
 			t.Fatal("IsNil fail")
 		}
 	})
 	t.Run("ToInt64", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		if _, err := (&RedisMessage{typ: '_'}).ToInt64(); err == nil {
 			t.Fatal("ToInt64 not failed as expected")
 		}
@@ -481,6 +512,7 @@ func TestRedisMessage(t *testing.T) {
 	})
 
 	t.Run("ToBool", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		if _, err := (&RedisMessage{typ: '_'}).ToBool(); err == nil {
 			t.Fatal("ToBool not failed as expected")
 		}
@@ -494,6 +526,7 @@ func TestRedisMessage(t *testing.T) {
 	})
 
 	t.Run("AsBool", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		if _, err := (&RedisMessage{typ: '_'}).AsBool(); err == nil {
 			t.Fatal("AsBool not failed as expected")
 		}
@@ -507,6 +540,7 @@ func TestRedisMessage(t *testing.T) {
 	})
 
 	t.Run("ToFloat64", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		if _, err := (&RedisMessage{typ: '_'}).ToFloat64(); err == nil {
 			t.Fatal("ToFloat64 not failed as expected")
 		}
@@ -520,6 +554,7 @@ func TestRedisMessage(t *testing.T) {
 	})
 
 	t.Run("ToString", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		if _, err := (&RedisMessage{typ: '_'}).ToString(); err == nil {
 			t.Fatal("ToString not failed as expected")
 		}
@@ -533,6 +568,7 @@ func TestRedisMessage(t *testing.T) {
 	})
 
 	t.Run("AsReader", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		if _, err := (&RedisMessage{typ: '_'}).AsReader(); err == nil {
 			t.Fatal("AsReader not failed as expected")
 		}
@@ -546,6 +582,7 @@ func TestRedisMessage(t *testing.T) {
 	})
 
 	t.Run("DecodeJSON", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		if err := (&RedisMessage{typ: '_'}).DecodeJSON(nil); err == nil {
 			t.Fatal("DecodeJSON not failed as expected")
 		}
@@ -559,6 +596,7 @@ func TestRedisMessage(t *testing.T) {
 	})
 
 	t.Run("AsInt64", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		if _, err := (&RedisMessage{typ: '_'}).AsInt64(); err == nil {
 			t.Fatal("AsInt64 not failed as expected")
 		}
@@ -571,6 +609,7 @@ func TestRedisMessage(t *testing.T) {
 	})
 
 	t.Run("AsFloat64", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		if _, err := (&RedisMessage{typ: '_'}).AsFloat64(); err == nil {
 			t.Fatal("AsFloat64 not failed as expected")
 		}
@@ -583,6 +622,7 @@ func TestRedisMessage(t *testing.T) {
 	})
 
 	t.Run("ToArray", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		if _, err := (&RedisMessage{typ: '_'}).ToArray(); err == nil {
 			t.Fatal("ToArray not failed as expected")
 		}
@@ -596,6 +636,7 @@ func TestRedisMessage(t *testing.T) {
 	})
 
 	t.Run("AsStrSlice", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		if _, err := (&RedisMessage{typ: '_'}).AsStrSlice(); err == nil {
 			t.Fatal("AsStrSlice not failed as expected")
 		}
@@ -609,6 +650,7 @@ func TestRedisMessage(t *testing.T) {
 	})
 
 	t.Run("AsIntSlice", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		if _, err := (&RedisMessage{typ: '_'}).AsIntSlice(); err == nil {
 			t.Fatal("AsIntSlice not failed as expected")
 		}
@@ -622,6 +664,7 @@ func TestRedisMessage(t *testing.T) {
 	})
 
 	t.Run("AsFloatSlice", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		if _, err := (&RedisMessage{typ: '_'}).AsFloatSlice(); err == nil {
 			t.Fatal("AsFloatSlice not failed as expected")
 		}
@@ -635,6 +678,7 @@ func TestRedisMessage(t *testing.T) {
 	})
 
 	t.Run("AsMap", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		if _, err := (&RedisMessage{typ: '_'}).AsMap(); err == nil {
 			t.Fatal("AsMap not failed as expected")
 		}
@@ -648,6 +692,7 @@ func TestRedisMessage(t *testing.T) {
 	})
 
 	t.Run("AsStrMap", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		if _, err := (&RedisMessage{typ: '_'}).AsStrMap(); err == nil {
 			t.Fatal("AsStrMap not failed as expected")
 		}
@@ -661,6 +706,7 @@ func TestRedisMessage(t *testing.T) {
 	})
 
 	t.Run("AsIntMap", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		if _, err := (&RedisMessage{typ: '_'}).AsIntMap(); err == nil {
 			t.Fatal("AsIntMap not failed as expected")
 		}
@@ -674,6 +720,7 @@ func TestRedisMessage(t *testing.T) {
 	})
 
 	t.Run("ToMap", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		if _, err := (&RedisMessage{typ: '_'}).ToMap(); err == nil {
 			t.Fatal("ToMap not failed as expected")
 		}
@@ -687,6 +734,7 @@ func TestRedisMessage(t *testing.T) {
 	})
 
 	t.Run("ToAny", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		if _, err := (&RedisMessage{typ: '_'}).ToAny(); err == nil {
 			t.Fatal("ToAny not failed as expected")
 		}
@@ -700,6 +748,7 @@ func TestRedisMessage(t *testing.T) {
 	})
 
 	t.Run("AsXRangeEntry - no range id", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		if _, err := (&RedisMessage{typ: '_'}).AsXRangeEntry(); err == nil {
 			t.Fatal("AsXRangeEntry not failed as expected")
 		}
@@ -721,6 +770,7 @@ func TestRedisMessage(t *testing.T) {
 	})
 
 	t.Run("AsXRangeEntry - no range field values", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		if _, err := (&RedisMessage{typ: '_'}).AsXRangeEntry(); err == nil {
 			t.Fatal("AsXRangeEntry not failed as expected")
 		}
@@ -742,6 +792,7 @@ func TestRedisMessage(t *testing.T) {
 	})
 
 	t.Run("AsXRange", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		if _, err := (&RedisMessage{typ: '_'}).AsXRange(); err == nil {
 			t.Fatal("AsXRange not failed as expected")
 		}
@@ -752,6 +803,7 @@ func TestRedisMessage(t *testing.T) {
 	})
 
 	t.Run("AsXRead", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		if _, err := (&RedisMessage{typ: '_'}).AsXRead(); err == nil {
 			t.Fatal("AsXRead not failed as expected")
 		}
@@ -786,6 +838,7 @@ func TestRedisMessage(t *testing.T) {
 	})
 
 	t.Run("AsZScore", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		if _, err := (&RedisMessage{typ: '_'}).AsZScore(); err == nil {
 			t.Fatal("AsZScore not failed as expected")
 		}
@@ -798,6 +851,7 @@ func TestRedisMessage(t *testing.T) {
 	})
 
 	t.Run("AsZScores", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		if _, err := (&RedisMessage{typ: '_'}).AsZScores(); err == nil {
 			t.Fatal("AsZScore not failed as expected")
 		}
@@ -818,6 +872,7 @@ func TestRedisMessage(t *testing.T) {
 	})
 
 	t.Run("ToMap with non string key", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		defer func() {
 			if !strings.Contains(recover().(string), "redis message type : as map key is not supported") {
 				t.Fatal("ToString not panic as expected")
@@ -827,6 +882,7 @@ func TestRedisMessage(t *testing.T) {
 	})
 
 	t.Run("IsCacheHit", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		if (&RedisMessage{typ: '_'}).IsCacheHit() {
 			t.Fatal("IsCacheHit not as expected")
 		}

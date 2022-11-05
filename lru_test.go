@@ -7,6 +7,8 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"go.uber.org/goleak"
 )
 
 const PTTL = 50
@@ -15,6 +17,7 @@ const Entries = 3
 
 //gocyclo:ignore
 func TestLRU(t *testing.T) {
+	defer goleak.VerifyNone(t)
 
 	setup := func(t *testing.T) *lru {
 		lru := newLRU(entryMinSize * Entries)
@@ -26,6 +29,7 @@ func TestLRU(t *testing.T) {
 	}
 
 	t.Run("Cache Hit & Expire", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		lru := setup(t)
 		if v, _ := lru.GetOrPrepare("0", "GET", TTL); v.typ == 0 {
 			t.Fatalf("did not get the value from the second GetOrPrepare")
@@ -39,6 +43,7 @@ func TestLRU(t *testing.T) {
 	})
 
 	t.Run("Cache Should Not Expire By PTTL -2", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		lru := setup(t)
 		if v, entry := lru.GetOrPrepare("1", "GET", TTL); v.typ != 0 || entry != nil {
 			t.Fatalf("got unexpected value from the GetOrPrepare after pttl: %v %v", v, entry)
@@ -52,6 +57,7 @@ func TestLRU(t *testing.T) {
 	})
 
 	t.Run("Cache Miss Suppress", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		count := 5000
 		lru := setup(t)
 		wg := sync.WaitGroup{}
@@ -87,6 +93,7 @@ func TestLRU(t *testing.T) {
 	})
 
 	t.Run("Cache Evict", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		lru := setup(t)
 		for i := 1; i <= Entries; i++ {
 			lru.GetOrPrepare(strconv.Itoa(i), "GET", TTL)
@@ -103,6 +110,7 @@ func TestLRU(t *testing.T) {
 	})
 
 	t.Run("Cache Delete", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		lru := setup(t)
 		lru.Delete([]RedisMessage{{string: "0"}})
 		if v, _ := lru.GetOrPrepare("0", "GET", TTL); v.typ != 0 {
@@ -111,6 +119,7 @@ func TestLRU(t *testing.T) {
 	})
 
 	t.Run("Cache Flush", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		lru := setup(t)
 		for i := 1; i < Entries; i++ {
 			lru.GetOrPrepare(strconv.Itoa(i), "GET", TTL)
@@ -130,6 +139,7 @@ func TestLRU(t *testing.T) {
 	})
 
 	t.Run("Cache FreeAndClose", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		lru := setup(t)
 		v, entry := lru.GetOrPrepare("1", "GET", TTL)
 		if v.typ != 0 || entry != nil {
@@ -156,6 +166,7 @@ func TestLRU(t *testing.T) {
 	})
 
 	t.Run("Cache Cancel", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		lru := setup(t)
 		v, entry := lru.GetOrPrepare("1", "GET", TTL)
 		if v.typ != 0 || entry != nil {
@@ -177,6 +188,7 @@ func TestLRU(t *testing.T) {
 	})
 
 	t.Run("GetTTL", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		lru := setup(t)
 		if v := lru.GetTTL("empty"); v != -2 {
 			t.Fatalf("unexpected %v", v)
@@ -212,7 +224,9 @@ func BenchmarkLRU(b *testing.B) {
 }
 
 func TestEntry(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	t.Run("Wait", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		e := entry{ch: make(chan struct{}, 1)}
 		err := errors.New("any")
 		go func() {

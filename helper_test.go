@@ -8,11 +8,14 @@ import (
 	"time"
 
 	"github.com/rueian/rueidis/internal/cmds"
+	"go.uber.org/goleak"
 )
 
 //gocyclo:ignore
 func TestMGetCache(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	t.Run("single client", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		m := &mockConn{}
 		client, err := newSingleClient(&ClientOption{InitAddress: []string{""}}, m, func(dst string, opt *ClientOption) conn {
 			return m
@@ -21,6 +24,7 @@ func TestMGetCache(t *testing.T) {
 			t.Fatalf("unexpected err %v", err)
 		}
 		t.Run("Delegate DoCache", func(t *testing.T) {
+			defer goleak.VerifyNone(t)
 			m.DoCacheFn = func(cmd cmds.Cacheable, ttl time.Duration) RedisResult {
 				if !reflect.DeepEqual(cmd.Commands(), []string{"MGET", "1", "2"}) || ttl != 100 {
 					t.Fatalf("unexpected command %v, %v", cmd, ttl)
@@ -32,11 +36,13 @@ func TestMGetCache(t *testing.T) {
 			}
 		})
 		t.Run("Delegate DoCache Empty", func(t *testing.T) {
+			defer goleak.VerifyNone(t)
 			if v, err := MGetCache(client, context.Background(), 100, []string{}); err != nil || v == nil {
 				t.Fatalf("unexpected response %v %v", v, err)
 			}
 		})
 		t.Run("Delegate DoCache Err", func(t *testing.T) {
+			defer goleak.VerifyNone(t)
 			ctx, cancel := context.WithCancel(context.Background())
 			cancel()
 			m.DoCacheFn = func(cmd cmds.Cacheable, ttl time.Duration) RedisResult {
@@ -48,6 +54,7 @@ func TestMGetCache(t *testing.T) {
 		})
 	})
 	t.Run("cluster client", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		m := &mockConn{
 			DoFn: func(cmd cmds.Completed) RedisResult {
 				return slotsResp
@@ -60,6 +67,7 @@ func TestMGetCache(t *testing.T) {
 			t.Fatalf("unexpected err %v", err)
 		}
 		t.Run("Delegate DoCache", func(t *testing.T) {
+			defer goleak.VerifyNone(t)
 			keys := make([]string, 100)
 			for i := range keys {
 				keys[i] = strconv.Itoa(i)
@@ -84,11 +92,13 @@ func TestMGetCache(t *testing.T) {
 			}
 		})
 		t.Run("Delegate DoCache Empty", func(t *testing.T) {
+			defer goleak.VerifyNone(t)
 			if v, err := MGetCache(client, context.Background(), 100, []string{}); err != nil || v == nil {
 				t.Fatalf("unexpected response %v %v", v, err)
 			}
 		})
 		t.Run("Delegate DoCache Err", func(t *testing.T) {
+			defer goleak.VerifyNone(t)
 			ctx, cancel := context.WithCancel(context.Background())
 			cancel()
 			m.DoCacheFn = func(cmd cmds.Cacheable, ttl time.Duration) RedisResult {
@@ -103,7 +113,9 @@ func TestMGetCache(t *testing.T) {
 
 //gocyclo:ignore
 func TestJsonMGetCache(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	t.Run("single client", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		m := &mockConn{}
 		client, err := newSingleClient(&ClientOption{InitAddress: []string{""}}, m, func(dst string, opt *ClientOption) conn {
 			return m
@@ -112,6 +124,7 @@ func TestJsonMGetCache(t *testing.T) {
 			t.Fatalf("unexpected err %v", err)
 		}
 		t.Run("Delegate DoCache", func(t *testing.T) {
+			defer goleak.VerifyNone(t)
 			m.DoCacheFn = func(cmd cmds.Cacheable, ttl time.Duration) RedisResult {
 				if !reflect.DeepEqual(cmd.Commands(), []string{"JSON.MGET", "1", "2", "$"}) || ttl != 100 {
 					t.Fatalf("unexpected command %v, %v", cmd, ttl)
@@ -123,11 +136,13 @@ func TestJsonMGetCache(t *testing.T) {
 			}
 		})
 		t.Run("Delegate DoCache Empty", func(t *testing.T) {
+			defer goleak.VerifyNone(t)
 			if v, err := JsonMGetCache(client, context.Background(), 100, []string{}, "$"); err != nil || v == nil {
 				t.Fatalf("unexpected response %v %v", v, err)
 			}
 		})
 		t.Run("Delegate DoCache Err", func(t *testing.T) {
+			defer goleak.VerifyNone(t)
 			ctx, cancel := context.WithCancel(context.Background())
 			cancel()
 			m.DoCacheFn = func(cmd cmds.Cacheable, ttl time.Duration) RedisResult {
@@ -139,6 +154,7 @@ func TestJsonMGetCache(t *testing.T) {
 		})
 	})
 	t.Run("cluster client", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		m := &mockConn{
 			DoFn: func(cmd cmds.Completed) RedisResult {
 				return slotsResp
@@ -151,6 +167,7 @@ func TestJsonMGetCache(t *testing.T) {
 			t.Fatalf("unexpected err %v", err)
 		}
 		t.Run("Delegate DoCache", func(t *testing.T) {
+			defer goleak.VerifyNone(t)
 			keys := make([]string, 100)
 			for i := range keys {
 				keys[i] = strconv.Itoa(i)
@@ -175,11 +192,13 @@ func TestJsonMGetCache(t *testing.T) {
 			}
 		})
 		t.Run("Delegate DoCache Empty", func(t *testing.T) {
+			defer goleak.VerifyNone(t)
 			if v, err := JsonMGetCache(client, context.Background(), 100, []string{}, "$"); err != nil || v == nil {
 				t.Fatalf("unexpected response %v %v", v, err)
 			}
 		})
 		t.Run("Delegate DoCache Err", func(t *testing.T) {
+			defer goleak.VerifyNone(t)
 			ctx, cancel := context.WithCancel(context.Background())
 			cancel()
 			m.DoCacheFn = func(cmd cmds.Cacheable, ttl time.Duration) RedisResult {

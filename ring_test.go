@@ -7,11 +7,14 @@ import (
 	"time"
 
 	"github.com/rueian/rueidis/internal/cmds"
+	"go.uber.org/goleak"
 )
 
 //gocyclo:ignore
 func TestRing(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	t.Run("PutOne", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		ring := newRing(DefaultRingScale)
 		size := 5000
 		fixture := make(map[string]struct{}, size)
@@ -43,6 +46,7 @@ func TestRing(t *testing.T) {
 	})
 
 	t.Run("PutMulti", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		ring := newRing(DefaultRingScale)
 		size := 5000
 		fixture := make(map[string]struct{}, size)
@@ -77,6 +81,7 @@ func TestRing(t *testing.T) {
 	})
 
 	t.Run("NextWriteCmd & NextResultCh", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		ring := newRing(DefaultRingScale)
 		if one, multi, _ := ring.NextWriteCmd(); !one.IsEmpty() || multi != nil {
 			t.Fatalf("NextWriteCmd should returns nil if empty")
@@ -112,6 +117,7 @@ func TestRing(t *testing.T) {
 	})
 
 	t.Run("PutOne Wakeup WaitForWrite", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		ring := newRing(DefaultRingScale)
 		if one, _, ch := ring.NextWriteCmd(); ch == nil {
 			go func() {
@@ -126,6 +132,7 @@ func TestRing(t *testing.T) {
 	})
 
 	t.Run("PutMulti Wakeup WaitForWrite", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		ring := newRing(DefaultRingScale)
 		if _, multi, ch := ring.NextWriteCmd(); ch == nil {
 			go func() {

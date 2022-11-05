@@ -10,6 +10,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"go.uber.org/goleak"
 )
 
 const iteration = 100
@@ -101,6 +103,7 @@ func init() {
 }
 
 func TestReadNextMessage(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	b := bytes.NewBuffer(nil)
 	r := bufio.NewReader(b)
 
@@ -121,6 +124,7 @@ func TestReadNextMessage(t *testing.T) {
 }
 
 func TestWriteCmdAndRead(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	for i := 0; i < iteration; i++ {
 		b := bytes.NewBuffer(nil)
 		o := bufio.NewWriter(b)
@@ -152,6 +156,7 @@ func TestWriteCmdAndRead(t *testing.T) {
 }
 
 func TestReadI(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	for i := 0; i < iteration; i++ {
 		int1 := rand.Int63() - rand.Int63()
 		int2, err := readI(source(strconv.FormatInt(int1, 10)))
@@ -165,6 +170,7 @@ func TestReadI(t *testing.T) {
 }
 
 func TestReadBoolean(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	data := "#t\r\n"
 	for i := 1; i <= len(data); i++ {
 		m, err := readNextMessage(bufio.NewReader(io.LimitReader(strings.NewReader(data), int64(i))))
@@ -187,6 +193,7 @@ func TestReadBoolean(t *testing.T) {
 }
 
 func TestReadString(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	data := "+Hello word\r\n"
 	for i := 1; i <= len(data); i++ {
 		m, err := readNextMessage(bufio.NewReader(io.LimitReader(strings.NewReader(data), int64(i))))
@@ -209,6 +216,7 @@ func TestReadString(t *testing.T) {
 }
 
 func TestReadStringCRLFErr(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	data := "+\n"
 	if _, err := readNextMessage(bufio.NewReader(strings.NewReader(data))); err.Error() != unexpectedNoCRLF {
 		t.Fatalf("unexpected err %v", err)
@@ -216,6 +224,7 @@ func TestReadStringCRLFErr(t *testing.T) {
 }
 
 func TestReadChunkedString(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	data := "$?\r\n;4\r\nHell\r\n;5\r\no wor\r\n;1\r\nd\r\n;0\r\n"
 	for i := 1; i <= len(data); i++ {
 		m, err := readNextMessage(bufio.NewReader(io.LimitReader(strings.NewReader(data), int64(i))))
@@ -238,6 +247,7 @@ func TestReadChunkedString(t *testing.T) {
 }
 
 func TestReadChunkedArray(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	data := "*?\r\n:1\r\n:2\r\n:3\r\n.\r\n"
 
 	for i := 1; i <= len(data); i++ {
@@ -266,6 +276,7 @@ func TestReadChunkedArray(t *testing.T) {
 }
 
 func TestReadChunkedMap(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	data := "%?\r\n:1\r\n:2\r\n:3\r\n:4\r\n.\r\n"
 
 	for i := 1; i <= len(data); i++ {
@@ -295,6 +306,7 @@ func TestReadChunkedMap(t *testing.T) {
 
 // https://github.com/redis/redis-specifications/blob/master/protocol/RESP3.md#attribute-type
 func TestReadAttr(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	data := "|1\r\n+key-popularity\r\n%2\r\n$1\r\na\r\n,0.1923\r\n$1\r\nb\r\n,0.0012\r\n*2\r\n:2039123\r\n:9543892\r\n"
 
 	for i := 1; i <= len(data); i++ {
@@ -332,6 +344,7 @@ func TestReadAttr(t *testing.T) {
 }
 
 func TestReadRESP2NullString(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	data := "$-1\r\n"
 	for i := 1; i <= len(data); i++ {
 		m, err := readNextMessage(bufio.NewReader(io.LimitReader(strings.NewReader(data), int64(i))))
@@ -351,6 +364,7 @@ func TestReadRESP2NullString(t *testing.T) {
 }
 
 func TestReadRESP2NullStringInArray(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	data := "*3\r\n$5\r\nhello\r\n$-1\r\n$5\r\nworld\r\n"
 	for i := 1; i <= len(data); i++ {
 		m, err := readNextMessage(bufio.NewReader(io.LimitReader(strings.NewReader(data), int64(i))))
@@ -377,6 +391,7 @@ func TestReadRESP2NullStringInArray(t *testing.T) {
 }
 
 func TestReadRESP2NullArray(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	data := "*-1\r\n"
 	for i := 1; i <= len(data); i++ {
 		m, err := readNextMessage(bufio.NewReader(io.LimitReader(strings.NewReader(data), int64(i))))
@@ -396,10 +411,12 @@ func TestReadRESP2NullArray(t *testing.T) {
 }
 
 func TestWriteBReadB(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	TWriterAndReader(t, writeB, readB, false)
 }
 
 func TestWriteSReadS(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	TWriterAndReader(t, writeS, readS, true)
 }
 
@@ -427,6 +444,7 @@ func TWriterAndReader(t *testing.T, writer func(*bufio.Writer, byte, string) err
 }
 
 func TestRand(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	read := func(in *bufio.Reader) (m RedisMessage, err error) {
 		m, err = readNextMessage(in)
 		return
@@ -446,6 +464,7 @@ func TestRand(t *testing.T) {
 }
 
 func TestChunkedStringRand(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	chunkedPrefix := "$?\n;"
 
 	read := func(in *bufio.Reader) (m RedisMessage, err error) {

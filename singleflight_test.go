@@ -5,9 +5,12 @@ import (
 	"runtime"
 	"sync/atomic"
 	"testing"
+
+	"go.uber.org/goleak"
 )
 
 func TestSingleFlight(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	var calls, done, err int64
 
 	sg := call{}

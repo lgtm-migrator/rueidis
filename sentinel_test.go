@@ -9,17 +9,21 @@ import (
 	"time"
 
 	"github.com/rueian/rueidis/internal/cmds"
+	"go.uber.org/goleak"
 )
 
 //gocyclo:ignore
 func TestSentinelClientInit(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	t.Run("Init no nodes", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		if _, err := newSentinelClient(&ClientOption{InitAddress: []string{}}, func(dst string, opt *ClientOption) conn { return nil }); err != ErrNoAddr {
 			t.Fatalf("unexpected err %v", err)
 		}
 	})
 
 	t.Run("Init no dialable", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		v := errors.New("dial err")
 		if _, err := newSentinelClient(&ClientOption{InitAddress: []string{":0"}}, func(dst string, opt *ClientOption) conn {
 			return &mockConn{DialFn: func() error { return v }}
@@ -29,6 +33,7 @@ func TestSentinelClientInit(t *testing.T) {
 	})
 
 	t.Run("Refresh err", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		v := errors.New("refresh err")
 		if _, err := newSentinelClient(&ClientOption{InitAddress: []string{":0"}}, func(dst string, opt *ClientOption) conn {
 			return &mockConn{
@@ -40,6 +45,7 @@ func TestSentinelClientInit(t *testing.T) {
 	})
 
 	t.Run("Refresh retry", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		v := errors.New("refresh err")
 		s0 := &mockConn{
 			DoFn: func(cmd cmds.Completed) RedisResult { return RedisResult{} },
@@ -162,6 +168,7 @@ func TestSentinelClientInit(t *testing.T) {
 	})
 
 	t.Run("Refresh retry 2", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		v := errors.New("refresh err")
 		s0 := &mockConn{
 			DoFn: func(cmd cmds.Completed) RedisResult { return RedisResult{} },
@@ -229,6 +236,7 @@ func TestSentinelClientInit(t *testing.T) {
 	})
 
 	t.Run("sentinel disconnect", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		trigger := make(chan error)
 		disconnect := int32(0)
 		s0closed := int32(0)
@@ -358,6 +366,7 @@ func TestSentinelClientInit(t *testing.T) {
 }
 
 func TestSentinelRefreshAfterClose(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	first := true
 	s0 := &mockConn{
 		DoFn: func(cmd cmds.Completed) RedisResult { return RedisResult{} },
@@ -398,6 +407,7 @@ func TestSentinelRefreshAfterClose(t *testing.T) {
 }
 
 func TestSentinelSwitchAfterClose(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	first := true
 	s0 := &mockConn{
 		DoFn: func(cmd cmds.Completed) RedisResult { return RedisResult{} },
@@ -439,6 +449,7 @@ func TestSentinelSwitchAfterClose(t *testing.T) {
 
 //gocyclo:ignore
 func TestSentinelClientDelegate(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	s0 := &mockConn{
 		DoFn: func(cmd cmds.Completed) RedisResult { return RedisResult{} },
 		DoMultiFn: func(multi ...cmds.Completed) []RedisResult {
@@ -471,12 +482,14 @@ func TestSentinelClientDelegate(t *testing.T) {
 	defer client.Close()
 
 	t.Run("Nodes", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		if nodes := client.Nodes(); len(nodes) != 1 || nodes[":1"] == nil {
 			t.Fatalf("unexpected nodes")
 		}
 	})
 
 	t.Run("Delegate Do", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		c := client.B().Get().Key("Do").Build()
 		m.DoFn = func(cmd cmds.Completed) RedisResult {
 			if !reflect.DeepEqual(cmd.Commands(), c.Commands()) {
@@ -490,6 +503,7 @@ func TestSentinelClientDelegate(t *testing.T) {
 	})
 
 	t.Run("Delegate DoMulti", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		c := client.B().Get().Key("Do").Build()
 		m.DoMultiFn = func(cmd ...cmds.Completed) []RedisResult {
 			if !reflect.DeepEqual(cmd[0].Commands(), c.Commands()) {
@@ -506,6 +520,7 @@ func TestSentinelClientDelegate(t *testing.T) {
 	})
 
 	t.Run("Delegate DoCache", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		c := client.B().Get().Key("DoCache").Cache()
 		m.DoCacheFn = func(cmd cmds.Cacheable, ttl time.Duration) RedisResult {
 			if !reflect.DeepEqual(cmd.Commands(), c.Commands()) || ttl != 100 {
@@ -519,6 +534,7 @@ func TestSentinelClientDelegate(t *testing.T) {
 	})
 
 	t.Run("Delegate DoMultiCache", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		c := client.B().Get().Key("DoCache").Cache()
 		m.DoMultiCacheFn = func(multi ...CacheableTTL) []RedisResult {
 			if !reflect.DeepEqual(multi[0].Cmd.Commands(), c.Commands()) || multi[0].TTL != 100 {
@@ -535,6 +551,7 @@ func TestSentinelClientDelegate(t *testing.T) {
 	})
 
 	t.Run("Delegate Receive", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		c := client.B().Subscribe().Channel("ch").Build()
 		hdl := func(message PubSubMessage) {}
 		m.ReceiveFn = func(ctx context.Context, subscribe cmds.Completed, fn func(message PubSubMessage)) error {
@@ -549,6 +566,7 @@ func TestSentinelClientDelegate(t *testing.T) {
 	})
 
 	t.Run("Delegate Receive Redis Err", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		c := client.B().Subscribe().Channel("ch").Build()
 		e := &RedisError{}
 		m.ReceiveFn = func(ctx context.Context, subscribe cmds.Completed, fn func(message PubSubMessage)) error {
@@ -560,6 +578,7 @@ func TestSentinelClientDelegate(t *testing.T) {
 	})
 
 	t.Run("Delegate Close", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		called := false
 		m.CloseFn = func() { called = true }
 		client.Close()
@@ -569,6 +588,7 @@ func TestSentinelClientDelegate(t *testing.T) {
 	})
 
 	t.Run("Dedicated Err", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		v := errors.New("fn err")
 		if err := client.Dedicated(func(client DedicatedClient) error {
 			return v
@@ -578,6 +598,7 @@ func TestSentinelClientDelegate(t *testing.T) {
 	})
 
 	t.Run("Dedicated Delegate", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		w := &mockWire{
 			DoFn: func(cmd cmds.Completed) RedisResult {
 				return newResult(RedisMessage{typ: '+', string: "Delegate"}, nil)
@@ -627,6 +648,7 @@ func TestSentinelClientDelegate(t *testing.T) {
 	})
 
 	t.Run("Dedicate Delegate", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		w := &mockWire{
 			DoFn: func(cmd cmds.Completed) RedisResult {
 				return newResult(RedisMessage{typ: '+', string: "Delegate"}, nil)
@@ -675,6 +697,7 @@ func TestSentinelClientDelegate(t *testing.T) {
 
 //gocyclo:ignore
 func TestSentinelClientDelegateRetry(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	setup := func(t *testing.T) (client *sentinelClient, cb func()) {
 		retry := uint32(0)
 		trigger := make(chan error)
@@ -769,6 +792,7 @@ func TestSentinelClientDelegateRetry(t *testing.T) {
 	}
 
 	t.Run("Delegate Do", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		client, cb := setup(t)
 
 		go func() {
@@ -784,6 +808,7 @@ func TestSentinelClientDelegateRetry(t *testing.T) {
 	})
 
 	t.Run("Delegate DoMulti", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		client, cb := setup(t)
 
 		go func() {
@@ -799,6 +824,7 @@ func TestSentinelClientDelegateRetry(t *testing.T) {
 	})
 
 	t.Run("Delegate DoCache", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		client, cb := setup(t)
 
 		go func() {
@@ -814,6 +840,7 @@ func TestSentinelClientDelegateRetry(t *testing.T) {
 	})
 
 	t.Run("Delegate Receive", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		client, cb := setup(t)
 
 		go func() {
@@ -833,6 +860,7 @@ func TestSentinelClientDelegateRetry(t *testing.T) {
 
 //gocyclo:ignore
 func TestSentinelClientPubSub(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	var s0count, s0close, m1close, m2close, m4close int32
 
 	messages := make(chan PubSubMessage)
@@ -977,6 +1005,7 @@ func TestSentinelClientPubSub(t *testing.T) {
 }
 
 func TestSentinelClientRetry(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	SetupClientRetry(t, func(m *mockConn) Client {
 		m.DoOverride = map[string]func(cmd cmds.Completed) RedisResult{
 			"SENTINEL SENTINELS masters": func(cmd cmds.Completed) RedisResult {

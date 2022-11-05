@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/rueian/rueidis/internal/cmds"
+	"go.uber.org/goleak"
 )
 
 var slotsResp = newResult(RedisMessage{typ: '*', values: []RedisMessage{
@@ -59,13 +60,16 @@ var singleSlotResp2 = newResult(RedisMessage{typ: '*', values: []RedisMessage{
 
 //gocyclo:ignore
 func TestClusterClientInit(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	t.Run("Init no nodes", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		if _, err := newClusterClient(&ClientOption{InitAddress: []string{}}, func(dst string, opt *ClientOption) conn { return nil }); err != ErrNoAddr {
 			t.Fatalf("unexpected err %v", err)
 		}
 	})
 
 	t.Run("Init no dialable", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		v := errors.New("dial err")
 		if _, err := newClusterClient(&ClientOption{InitAddress: []string{":0"}}, func(dst string, opt *ClientOption) conn {
 			return &mockConn{DialFn: func() error { return v }}
@@ -75,6 +79,7 @@ func TestClusterClientInit(t *testing.T) {
 	})
 
 	t.Run("Refresh err", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		v := errors.New("refresh err")
 		if _, err := newClusterClient(&ClientOption{InitAddress: []string{":0"}}, func(dst string, opt *ClientOption) conn {
 			return &mockConn{DoFn: func(cmd cmds.Completed) RedisResult { return newErrResult(v) }}
@@ -84,6 +89,7 @@ func TestClusterClientInit(t *testing.T) {
 	})
 
 	t.Run("Refresh retry", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		var first int64
 		if _, err := newClusterClient(&ClientOption{InitAddress: []string{":0"}}, func(dst string, opt *ClientOption) conn {
 			return &mockConn{
@@ -100,6 +106,7 @@ func TestClusterClientInit(t *testing.T) {
 	})
 
 	t.Run("Refresh retry err", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		v := errors.New("dial err")
 		var first int64
 		if _, err := newClusterClient(&ClientOption{InitAddress: []string{":0"}}, func(dst string, opt *ClientOption) conn {
@@ -120,6 +127,7 @@ func TestClusterClientInit(t *testing.T) {
 	})
 
 	t.Run("Refresh replace", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		var first int64
 		client, err := newClusterClient(&ClientOption{InitAddress: []string{":1", ":2"}}, func(dst string, opt *ClientOption) conn {
 			return &mockConn{
@@ -163,6 +171,7 @@ func TestClusterClientInit(t *testing.T) {
 
 //gocyclo:ignore
 func TestClusterClient(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	m := &mockConn{
 		DoFn: func(cmd cmds.Completed) RedisResult {
 			if strings.Join(cmd.Commands(), " ") == "CLUSTER SLOTS" {
@@ -212,6 +221,7 @@ func TestClusterClient(t *testing.T) {
 	}
 
 	t.Run("Nodes", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		nodes := client.Nodes()
 		if len(nodes) != 2 || nodes[":0"] == nil || nodes[":1"] == nil {
 			t.Fatalf("unexpected Nodes")
@@ -219,6 +229,7 @@ func TestClusterClient(t *testing.T) {
 	})
 
 	t.Run("Delegate Do with no slot", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		c := client.B().Info().Build()
 		if v, err := client.Do(context.Background(), c).ToString(); err != nil || v != "Info" {
 			t.Fatalf("unexpected response %v %v", v, err)
@@ -226,6 +237,7 @@ func TestClusterClient(t *testing.T) {
 	})
 
 	t.Run("Delegate Do", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		c := client.B().Get().Key("Do").Build()
 		if v, err := client.Do(context.Background(), c).ToString(); err != nil || v != "Do" {
 			t.Fatalf("unexpected response %v %v", v, err)
@@ -233,12 +245,14 @@ func TestClusterClient(t *testing.T) {
 	})
 
 	t.Run("Delegate DoMulti Empty", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		if resps := client.DoMulti(context.Background()); resps != nil {
 			t.Fatalf("unexpected response %v", resps)
 		}
 	})
 
 	t.Run("Delegate DoMulti Single Slot", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		c1 := client.B().Get().Key("K1{a}").Build()
 		c2 := client.B().Get().Key("K2{a}").Build()
 		resps := client.DoMulti(context.Background(), c1, c2)
@@ -251,6 +265,7 @@ func TestClusterClient(t *testing.T) {
 	})
 
 	t.Run("Delegate DoMulti Single Slot + Init Slot", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		c1 := client.B().Get().Key("K1{a}").Build()
 		c2 := client.B().Info().Build()
 		resps := client.DoMulti(context.Background(), c1, c2)
@@ -263,6 +278,7 @@ func TestClusterClient(t *testing.T) {
 	})
 
 	t.Run("Delegate DoMulti Cross Slot + Init Slot", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		defer func() {
 			if err := recover(); err != panicMixCxSlot {
 				t.Errorf("DoMulti should panic if Cross Slot + Init Slot")
@@ -275,6 +291,7 @@ func TestClusterClient(t *testing.T) {
 	})
 
 	t.Run("Delegate DoMulti Multi Slot", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		multi := make([]cmds.Completed, 500)
 		for i := 0; i < len(multi); i++ {
 			multi[i] = client.B().Get().Key(fmt.Sprintf("K1{%d}", i)).Build()
@@ -288,6 +305,7 @@ func TestClusterClient(t *testing.T) {
 	})
 
 	t.Run("Delegate DoCache", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		c := client.B().Get().Key("DoCache").Cache()
 		if v, err := client.DoCache(context.Background(), c, 100).ToString(); err != nil || v != "DoCache" {
 			t.Fatalf("unexpected response %v %v", v, err)
@@ -295,12 +313,14 @@ func TestClusterClient(t *testing.T) {
 	})
 
 	t.Run("Delegate DoMultiCache Empty", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		if resps := client.DoMultiCache(context.Background()); resps != nil {
 			t.Fatalf("unexpected response %v", resps)
 		}
 	})
 
 	t.Run("Delegate DoMultiCache Single Slot", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		c1 := client.B().Get().Key("K1{a}").Cache()
 		c2 := client.B().Get().Key("K2{a}").Cache()
 		resps := client.DoMultiCache(context.Background(), CT(c1, time.Second), CT(c2, time.Second))
@@ -313,6 +333,7 @@ func TestClusterClient(t *testing.T) {
 	})
 
 	t.Run("Delegate DoMultiCache Multi Slot", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		multi := make([]CacheableTTL, 500)
 		for i := 0; i < len(multi); i++ {
 			multi[i] = CT(client.B().Get().Key(fmt.Sprintf("K1{%d}", i)).Cache(), time.Second)
@@ -326,6 +347,7 @@ func TestClusterClient(t *testing.T) {
 	})
 
 	t.Run("Delegate Receive", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		c := client.B().Subscribe().Channel("ch").Build()
 		hdl := func(message PubSubMessage) {}
 		m.ReceiveFn = func(ctx context.Context, subscribe cmds.Completed, fn func(message PubSubMessage)) error {
@@ -340,6 +362,7 @@ func TestClusterClient(t *testing.T) {
 	})
 
 	t.Run("Delegate Receive Redis Err", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		c := client.B().Subscribe().Channel("ch").Build()
 		e := &RedisError{}
 		m.ReceiveFn = func(ctx context.Context, subscribe cmds.Completed, fn func(message PubSubMessage)) error {
@@ -351,6 +374,7 @@ func TestClusterClient(t *testing.T) {
 	})
 
 	t.Run("Delegate Close", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		once := sync.Once{}
 		called := make(chan struct{})
 		m.CloseFn = func() {
@@ -361,6 +385,7 @@ func TestClusterClient(t *testing.T) {
 	})
 
 	t.Run("Dedicated Err", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		v := errors.New("fn err")
 		if err := client.Dedicated(func(client DedicatedClient) error {
 			return v
@@ -370,6 +395,7 @@ func TestClusterClient(t *testing.T) {
 	})
 
 	t.Run("Dedicated No Slot Err", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		defer func() {
 			if err := recover(); err != panicMsgNoSlot {
 				t.Errorf("Dedicated should panic if no slot is selected")
@@ -382,6 +408,7 @@ func TestClusterClient(t *testing.T) {
 	})
 
 	t.Run("Dedicated Cross Slot Err", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		defer func() {
 			if err := recover(); err != panicMsgCxSlot {
 				t.Errorf("Dedicated should panic if cross slots is used")
@@ -395,6 +422,7 @@ func TestClusterClient(t *testing.T) {
 	})
 
 	t.Run("Dedicated Multi Cross Slot Err", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		m.AcquireFn = func() wire { return &mockWire{} }
 		err := client.Dedicated(func(c DedicatedClient) (err error) {
 			defer func() {
@@ -413,6 +441,7 @@ func TestClusterClient(t *testing.T) {
 	})
 
 	t.Run("Dedicated Delegate Receive Redis Err", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		e := &RedisError{}
 		w := &mockWire{
 			ReceiveFn: func(ctx context.Context, subscribe cmds.Completed, fn func(message PubSubMessage)) error {
@@ -430,6 +459,7 @@ func TestClusterClient(t *testing.T) {
 	})
 
 	t.Run("Dedicated Delegate", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		closed := false
 		w := &mockWire{
 			DoFn: func(cmd cmds.Completed) RedisResult {
@@ -507,6 +537,7 @@ func TestClusterClient(t *testing.T) {
 	})
 
 	t.Run("Dedicated Delegate", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		closed := false
 		w := &mockWire{
 			DoFn: func(cmd cmds.Completed) RedisResult {
@@ -582,6 +613,7 @@ func TestClusterClient(t *testing.T) {
 	})
 
 	t.Run("Dedicate Delegate Release On Close", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		stored := 0
 		w := &mockWire{}
 		m.AcquireFn = func() wire { return w }
@@ -597,6 +629,7 @@ func TestClusterClient(t *testing.T) {
 	})
 
 	t.Run("Dedicate Delegate No Duplicate Release", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		stored := 0
 		w := &mockWire{}
 		m.AcquireFn = func() wire { return w }
@@ -615,6 +648,7 @@ func TestClusterClient(t *testing.T) {
 	})
 
 	t.Run("Dedicated SetPubSubHooks Released", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		c, cancel := client.Dedicate()
 		ch1 := c.SetPubSubHooks(PubSubHooks{OnMessage: func(m PubSubMessage) {}})
 		ch2 := c.SetPubSubHooks(PubSubHooks{OnMessage: func(m PubSubMessage) {}})
@@ -624,6 +658,7 @@ func TestClusterClient(t *testing.T) {
 	})
 
 	t.Run("Dedicated SetPubSubHooks Close", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		c, cancel := client.Dedicate()
 		defer cancel()
 		ch := c.SetPubSubHooks(PubSubHooks{OnMessage: func(m PubSubMessage) {}})
@@ -634,6 +669,7 @@ func TestClusterClient(t *testing.T) {
 	})
 
 	t.Run("Dedicated SetPubSubHooks Released", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		c, cancel := client.Dedicate()
 		defer cancel()
 		if ch := c.SetPubSubHooks(PubSubHooks{}); ch != nil {
@@ -644,7 +680,9 @@ func TestClusterClient(t *testing.T) {
 
 //gocyclo:ignore
 func TestClusterClientErr(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	t.Run("refresh err on pick", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		var first int64
 		v := errors.New("refresh err")
 		m := &mockConn{
@@ -682,6 +720,7 @@ func TestClusterClientErr(t *testing.T) {
 	})
 
 	t.Run("refresh empty on pick", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		m := &mockConn{DoFn: func(cmd cmds.Completed) RedisResult {
 			return singleSlotResp
 		}}
@@ -700,6 +739,7 @@ func TestClusterClientErr(t *testing.T) {
 	})
 
 	t.Run("refresh empty on pick in dedicated wire", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		m := &mockConn{DoFn: func(cmd cmds.Completed) RedisResult {
 			return singleSlotResp
 		}}
@@ -722,6 +762,7 @@ func TestClusterClientErr(t *testing.T) {
 	})
 
 	t.Run("refresh empty on pick in dedicated wire (multi)", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		m := &mockConn{DoFn: func(cmd cmds.Completed) RedisResult {
 			return singleSlotResp
 		}}
@@ -749,6 +790,7 @@ func TestClusterClientErr(t *testing.T) {
 	})
 
 	t.Run("slot reconnect", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		var count, check int64
 		m := &mockConn{DoFn: func(cmd cmds.Completed) RedisResult {
 			if strings.Join(cmd.Commands(), " ") == "CLUSTER SLOTS" {
@@ -778,6 +820,7 @@ func TestClusterClientErr(t *testing.T) {
 	})
 
 	t.Run("slot moved", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		var count int64
 		m := &mockConn{DoFn: func(cmd cmds.Completed) RedisResult {
 			if strings.Join(cmd.Commands(), " ") == "CLUSTER SLOTS" {
@@ -800,6 +843,7 @@ func TestClusterClientErr(t *testing.T) {
 	})
 
 	t.Run("slot moved DoMulti", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		var count int64
 		m := &mockConn{DoFn: func(cmd cmds.Completed) RedisResult {
 			return slotsResp
@@ -826,6 +870,7 @@ func TestClusterClientErr(t *testing.T) {
 	})
 
 	t.Run("slot moved new", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		var count, check int64
 		m := &mockConn{DoFn: func(cmd cmds.Completed) RedisResult {
 			if strings.Join(cmd.Commands(), " ") == "CLUSTER SLOTS" {
@@ -855,6 +900,7 @@ func TestClusterClientErr(t *testing.T) {
 	})
 
 	t.Run("slot moved new (multi)", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		var count, check int64
 		m := &mockConn{DoFn: func(cmd cmds.Completed) RedisResult {
 			return slotsResp
@@ -888,6 +934,7 @@ func TestClusterClientErr(t *testing.T) {
 	})
 
 	t.Run("slot moved (cache)", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		var count int64
 		m := &mockConn{
 			DoFn: func(cmd cmds.Completed) RedisResult {
@@ -912,6 +959,7 @@ func TestClusterClientErr(t *testing.T) {
 	})
 
 	t.Run("slot moved (cache multi)", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		var count int64
 		m := &mockConn{DoFn: func(cmd cmds.Completed) RedisResult {
 			return slotsResp
@@ -933,6 +981,7 @@ func TestClusterClientErr(t *testing.T) {
 	})
 
 	t.Run("slot asking", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		var count int64
 		m := &mockConn{
 			DoFn: func(cmd cmds.Completed) RedisResult {
@@ -960,6 +1009,7 @@ func TestClusterClientErr(t *testing.T) {
 	})
 
 	t.Run("slot asking DoMulti", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		var count int64
 		m := &mockConn{
 			DoFn: func(cmd cmds.Completed) RedisResult {
@@ -989,6 +1039,7 @@ func TestClusterClientErr(t *testing.T) {
 	})
 
 	t.Run("slot asking (cache)", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		var count int64
 		m := &mockConn{
 			DoFn: func(cmd cmds.Completed) RedisResult {
@@ -1016,6 +1067,7 @@ func TestClusterClientErr(t *testing.T) {
 	})
 
 	t.Run("slot asking (cache multi)", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		var count int64
 		m := &mockConn{
 			DoFn: func(cmd cmds.Completed) RedisResult {
@@ -1048,6 +1100,7 @@ func TestClusterClientErr(t *testing.T) {
 	})
 
 	t.Run("slot try again", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		var count int64
 		m := &mockConn{DoFn: func(cmd cmds.Completed) RedisResult {
 			if strings.Join(cmd.Commands(), " ") == "CLUSTER SLOTS" {
@@ -1070,6 +1123,7 @@ func TestClusterClientErr(t *testing.T) {
 	})
 
 	t.Run("slot try again DoMulti", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		var count int64
 		m := &mockConn{DoFn: func(cmd cmds.Completed) RedisResult {
 			return slotsResp
@@ -1096,6 +1150,7 @@ func TestClusterClientErr(t *testing.T) {
 	})
 
 	t.Run("slot try again (cache)", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		var count int64
 		m := &mockConn{
 			DoFn: func(cmd cmds.Completed) RedisResult {
@@ -1120,6 +1175,7 @@ func TestClusterClientErr(t *testing.T) {
 	})
 
 	t.Run("slot try again (cache multi)", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		var count int64
 		m := &mockConn{DoFn: func(cmd cmds.Completed) RedisResult {
 			return slotsResp
@@ -1142,6 +1198,7 @@ func TestClusterClientErr(t *testing.T) {
 }
 
 func TestClusterClientRetry(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	SetupClientRetry(t, func(m *mockConn) Client {
 		m.DoOverride = map[string]func(cmd cmds.Completed) RedisResult{
 			"CLUSTER SLOTS": func(cmd cmds.Completed) RedisResult { return slotsResp },

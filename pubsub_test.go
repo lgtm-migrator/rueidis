@@ -3,15 +3,20 @@ package rueidis
 import (
 	"testing"
 	"time"
+
+	"go.uber.org/goleak"
 )
 
 func TestSubs_Publish(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	t.Run("without subs", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		s := newSubs()
 		s.Publish("aa", PubSubMessage{}) // just no block
 	})
 
 	t.Run("with multiple subs", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		s := newSubs()
 		ch1, cancel1 := s.Subscribe([]string{"a"})
 		ch2, cancel2 := s.Subscribe([]string{"a"})
@@ -43,6 +48,7 @@ func TestSubs_Publish(t *testing.T) {
 	})
 
 	t.Run("drain ch", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		s := newSubs()
 		ch, cancel := s.Subscribe([]string{"a"})
 		s.Publish("a", PubSubMessage{})
@@ -57,6 +63,7 @@ func TestSubs_Publish(t *testing.T) {
 }
 
 func TestSubs_Unsubscribe(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	s := newSubs()
 	ch, _ := s.Subscribe([]string{"1", "2"})
 	go func() {
@@ -74,6 +81,7 @@ func TestSubs_Unsubscribe(t *testing.T) {
 }
 
 func TestSubs_Confirm(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	s := newSubs()
 	_, remove := s.Subscribe([]string{"1", "2"})
 

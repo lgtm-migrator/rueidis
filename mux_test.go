@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/rueian/rueidis/internal/cmds"
+	"go.uber.org/goleak"
 )
 
 func setupMux(wires []*mockWire) (conn *mux, checkClean func(t *testing.T)) {
@@ -29,6 +30,7 @@ func setupMuxWithOption(wires []*mockWire, option *ClientOption) (conn *mux, che
 			count++
 			return wires[count]
 		}), func(t *testing.T) {
+			defer goleak.VerifyNone(t)
 			if count != len(wires)-1 {
 				t.Fatalf("there is %d remaining unused wires", len(wires)-count-1)
 			}
@@ -36,6 +38,7 @@ func setupMuxWithOption(wires []*mockWire, option *ClientOption) (conn *mux, che
 }
 
 func TestNewMuxDailErr(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	c := 0
 	e := errors.New("any")
 	m := makeMux("", &ClientOption{}, func(dst string, opt *ClientOption) (net.Conn, error) {
@@ -63,6 +66,7 @@ func TestNewMuxDailErr(t *testing.T) {
 }
 
 func TestNewMux(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	n1, n2 := net.Pipe()
 	mock := &redisMock{t: t, buf: bufio.NewReader(n2), conn: n2}
 	go func() {
@@ -87,6 +91,7 @@ func TestNewMux(t *testing.T) {
 	}
 
 	t.Run("Override with previous mux", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		m2 := makeMux("", &ClientOption{}, func(dst string, opt *ClientOption) (net.Conn, error) {
 			return n1, nil
 		})
@@ -98,6 +103,7 @@ func TestNewMux(t *testing.T) {
 	})
 }
 func TestNewMuxPipelineMultiplex(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	for _, v := range []int{-1, 0, 1, 2} {
 		m := makeMux("", &ClientOption{PipelineMultiplex: v}, func(dst string, opt *ClientOption) (net.Conn, error) { return nil, nil })
 		if (v < 0 && len(m.wire) != 1) || (v >= 0 && len(m.wire) != 1<<v) {
@@ -107,6 +113,7 @@ func TestNewMuxPipelineMultiplex(t *testing.T) {
 }
 
 func TestMuxAddr(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	m := makeMux("dst1", &ClientOption{}, nil)
 	if m.Addr() != "dst1" {
 		t.Fatalf("unexpected m.Addr != dst1")
@@ -114,6 +121,7 @@ func TestMuxAddr(t *testing.T) {
 }
 
 func TestMuxDialSuppress(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	var wires, waits, done int64
 	blocking := make(chan struct{})
 	m := newMux("", &ClientOption{}, (*mockWire)(nil), (*mockWire)(nil), func() wire {
@@ -142,7 +150,9 @@ func TestMuxDialSuppress(t *testing.T) {
 
 //gocyclo:ignore
 func TestMuxReuseWire(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	t.Run("reuse wire if no error", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		m, checkClean := setupMux([]*mockWire{
 			{
 				DoFn: func(cmd cmds.Completed) RedisResult {
@@ -161,6 +171,7 @@ func TestMuxReuseWire(t *testing.T) {
 	})
 
 	t.Run("reuse blocking pool", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		blocking := make(chan struct{})
 		response := make(chan RedisResult)
 		m, checkClean := setupMux([]*mockWire{
@@ -211,6 +222,7 @@ func TestMuxReuseWire(t *testing.T) {
 	})
 
 	t.Run("unsubscribe blocking pool", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		cleaned := false
 		m, checkClean := setupMux([]*mockWire{
 			{
@@ -240,7 +252,9 @@ func TestMuxReuseWire(t *testing.T) {
 
 //gocyclo:ignore
 func TestMuxDelegation(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	t.Run("wire info", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		m, checkClean := setupMux([]*mockWire{
 			{
 				InfoFn: func() map[string]RedisMessage {
@@ -256,6 +270,7 @@ func TestMuxDelegation(t *testing.T) {
 	})
 
 	t.Run("wire err", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		e := errors.New("err")
 		m, checkClean := setupMux([]*mockWire{
 			{
@@ -272,6 +287,7 @@ func TestMuxDelegation(t *testing.T) {
 	})
 
 	t.Run("wire do", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		m, checkClean := setupMux([]*mockWire{
 			{
 				DoFn: func(cmd cmds.Completed) RedisResult {
@@ -303,6 +319,7 @@ func TestMuxDelegation(t *testing.T) {
 	})
 
 	t.Run("wire do multi", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		m, checkClean := setupMux([]*mockWire{
 			{
 				DoMultiFn: func(multi ...cmds.Completed) []RedisResult {
@@ -331,6 +348,7 @@ func TestMuxDelegation(t *testing.T) {
 	})
 
 	t.Run("wire do cache", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		m, checkClean := setupMux([]*mockWire{
 			{
 				DoCacheFn: func(cmd cmds.Cacheable, ttl time.Duration) RedisResult {
@@ -359,6 +377,7 @@ func TestMuxDelegation(t *testing.T) {
 	})
 
 	t.Run("wire do multi cache", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		m, checkClean := setupMux([]*mockWire{
 			{
 				DoMultiCacheFn: func(multi ...CacheableTTL) []RedisResult {
@@ -387,6 +406,7 @@ func TestMuxDelegation(t *testing.T) {
 	})
 
 	t.Run("wire do multi cache multiple slots", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		multiplex := 1
 		wires := make([]*mockWire, 1<<multiplex)
 		for i := range wires {
@@ -429,6 +449,7 @@ func TestMuxDelegation(t *testing.T) {
 	})
 
 	t.Run("wire do multi cache multiple slots fail", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		multiplex := 1
 		wires := make([]*mockWire, 1<<multiplex)
 		for i := range wires {
@@ -466,6 +487,7 @@ func TestMuxDelegation(t *testing.T) {
 	})
 
 	t.Run("wire receive", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		m, checkClean := setupMux([]*mockWire{
 			{
 				ReceiveFn: func(ctx context.Context, subscribe cmds.Completed, fn func(message PubSubMessage)) error {
@@ -495,6 +517,7 @@ func TestMuxDelegation(t *testing.T) {
 	})
 
 	t.Run("single blocking", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		blocked := make(chan struct{})
 		responses := make(chan RedisResult)
 
@@ -544,6 +567,7 @@ func TestMuxDelegation(t *testing.T) {
 	})
 
 	t.Run("single blocking no recycle the wire if err", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		closed := false
 		m, checkClean := setupMux([]*mockWire{
 			{
@@ -583,6 +607,7 @@ func TestMuxDelegation(t *testing.T) {
 	})
 
 	t.Run("multiple blocking", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		blocked := make(chan struct{})
 		responses := make(chan RedisResult)
 
@@ -636,6 +661,7 @@ func TestMuxDelegation(t *testing.T) {
 	})
 
 	t.Run("multi blocking no recycle the wire if err", func(t *testing.T) {
+		defer goleak.VerifyNone(t)
 		closed := false
 		m, checkClean := setupMux([]*mockWire{
 			{

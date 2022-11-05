@@ -8,6 +8,8 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"go.uber.org/goleak"
 )
 
 func parallel(p int) (chan func(), func()) {
@@ -501,6 +503,7 @@ func run(t *testing.T, client Client, cases ...func(*testing.T, Client)) {
 }
 
 func TestSingleClientIntegration(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	client, err := NewClient(ClientOption{
 		InitAddress:      []string{"127.0.0.1:6379"},
 		ConnWriteTimeout: 180 * time.Second,
@@ -517,6 +520,7 @@ func TestSingleClientIntegration(t *testing.T) {
 }
 
 func TestSentinelClientIntegration(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	client, err := NewClient(ClientOption{
 		InitAddress:      []string{"127.0.0.1:26379"},
 		ConnWriteTimeout: 180 * time.Second,
@@ -536,6 +540,7 @@ func TestSentinelClientIntegration(t *testing.T) {
 }
 
 func TestClusterClientIntegration(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	client, err := NewClient(ClientOption{
 		InitAddress:      []string{"127.0.0.1:7001", "127.0.0.1:7002", "127.0.0.1:7003"},
 		ConnWriteTimeout: 180 * time.Second,
@@ -551,6 +556,7 @@ func TestClusterClientIntegration(t *testing.T) {
 }
 
 func TestSingleClient5Integration(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	client, err := NewClient(ClientOption{
 		InitAddress:      []string{"127.0.0.1:6355"},
 		ConnWriteTimeout: 180 * time.Second,
@@ -567,6 +573,7 @@ func TestSingleClient5Integration(t *testing.T) {
 }
 
 func TestCluster5ClientIntegration(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	client, err := NewClient(ClientOption{
 		InitAddress:      []string{"127.0.0.1:7004", "127.0.0.1:7005", "127.0.0.1:7006"},
 		ConnWriteTimeout: 180 * time.Second,
@@ -583,6 +590,7 @@ func TestCluster5ClientIntegration(t *testing.T) {
 }
 
 func TestSentinel5ClientIntegration(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	client, err := NewClient(ClientOption{
 		InitAddress:      []string{"127.0.0.1:26355"},
 		ConnWriteTimeout: 180 * time.Second,
@@ -602,6 +610,7 @@ func TestSentinel5ClientIntegration(t *testing.T) {
 }
 
 func TestKeyDBSingleClientIntegration(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	client, err := NewClient(ClientOption{
 		InitAddress:      []string{"127.0.0.1:6344"},
 		ConnWriteTimeout: 180 * time.Second,
@@ -618,6 +627,7 @@ func TestKeyDBSingleClientIntegration(t *testing.T) {
 }
 
 func TestDragonflyDBSingleClientIntegration(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	client, err := NewClient(ClientOption{
 		InitAddress:      []string{"127.0.0.1:6333"},
 		ConnWriteTimeout: 180 * time.Second,
@@ -634,6 +644,7 @@ func TestDragonflyDBSingleClientIntegration(t *testing.T) {
 }
 
 func TestKvrocksSingleClientIntegration(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	client, err := NewClient(ClientOption{
 		InitAddress:      []string{"127.0.0.1:6666"},
 		ConnWriteTimeout: 180 * time.Second,
